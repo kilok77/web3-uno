@@ -24,11 +24,11 @@ A1 OO model ─────┤                                                  
 
 | Assignment | Topic | Status |
 |------------|-------|--------|
-| 1 | OO UNO model | In progress — A1.2 complete |
+| 1 | OO UNO model | In progress — A1.3 complete |
 | 2 | Vue + Web Workers | Not started |
 | 3 | GraphQL multiplayer | Not started |
 | 4 | Functional UNO | Not started |
 | 5 | React + Redux + RxJS | Not started |
 | 6 | Next.js SSR | Not started |
 
-Current status: repository structure and cross-assignment documentation initialized; Assignment 1 card/type foundations are implemented through A1.2.
+Current status: repository structure and cross-assignment documentation initialized; Assignment 1 card/type and Deck foundations are implemented through A1.3.

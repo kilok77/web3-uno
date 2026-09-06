@@ -61,9 +61,10 @@ The reference extraction must remain pristine. When implementation begins, estab
 
 ## Implementation status
 
-- A1.1 contract analysis: complete.
-- A1.2 Card/type system: complete.
-- A1.3 Deck: not started.
+- A1.1 complete
+- A1.2 complete
+- A1.3 complete
+- A1.4 Hand not started
 
 ## Notes
 
@@ -72,3 +73,4 @@ The reference extraction must remain pristine. When implementation begins, estab
 - Wild Draw Four challenge behavior is required by the rules but has no supplied public API or test.
 - Some two-player score fixtures use an out-of-range dealer index and require a narrow decision before implementation.
 - Cards are readonly structural values modeled as a precise discriminated union in `src/model/deck.ts`. `Color` comes from a readonly `colors` tuple, numbered values are restricted to 0–9, `TypedCard<T>` is derived with `Extract`, and `hasColor`/`hasNumber` are narrowing type guards.
+- `Deck` is a mutable object-oriented pile with index 0 as its top. `deal` and injected `shuffle` mutate it; `filter` returns an independent Deck; mementos are ordered plain card arrays validated during restoration.

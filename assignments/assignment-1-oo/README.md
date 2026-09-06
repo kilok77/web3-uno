@@ -2,7 +2,7 @@
 
 Independent TypeScript/Jest snapshot for the object-oriented UNO domain model.
 
-Current scope: A1.2 card/type foundations only. Deck, Hand, Round, Game, gameplay, scoring, and mementos are not implemented yet.
+Current scope: A1.3 card/type and Deck foundations. Hand, Round, Game, gameplay, scoring, and non-Deck mementos are not implemented yet.
 
 ## Commands
 
