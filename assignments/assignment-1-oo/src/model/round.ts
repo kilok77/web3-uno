@@ -24,12 +24,13 @@ export type RoundConfig = {
 export class Round {
   readonly #players: string[]
   readonly #hands: Hand[]
-  readonly #drawPile: Deck
+  #drawPile: Deck
   #discardPile: Deck
   #currentColor: Color
   #currentDirection: Direction
   #playerInTurn: number
   #playableDrawnCardIndex: number | undefined
+  readonly #shuffler: Shuffler<Card>
 
   readonly dealer: number
 
@@ -45,6 +46,7 @@ export class Round {
 
     this.#players = [...players]
     this.dealer = dealer
+    this.#shuffler = shuffler
 
     let deck = createInitialDeck()
     deck.shuffle(shuffler)
@@ -167,10 +169,7 @@ export class Round {
     }
 
     const hand = this.#hands[this.#playerInTurn]
-    const drawnCard = this.#drawPile.deal()
-    if (drawnCard === undefined) {
-      throw new Error("The draw pile is empty")
-    }
+    const drawnCard = this.takeDrawCard()
 
     hand.add(drawnCard)
     const drawnCardIndex = hand.size - 1
@@ -218,8 +217,39 @@ export class Round {
 
   private applyDrawPenalty(cardCount: number): void {
     const penalizedPlayer = this.nextPlayer()
-    drawCards(this.#hands[penalizedPlayer], this.#drawPile, cardCount)
+    this.drawCards(this.#hands[penalizedPlayer], cardCount)
     this.advanceTurn(2)
+  }
+
+  private drawCards(hand: Hand, cardCount: number): void {
+    for (let drawn = 0; drawn < cardCount; drawn += 1) {
+      hand.add(this.takeDrawCard())
+    }
+  }
+
+  private takeDrawCard(): Card {
+    let card = this.#drawPile.deal()
+    if (card === undefined) {
+      this.recycleDiscardPile()
+      card = this.#drawPile.deal()
+    }
+    if (card === undefined) {
+      throw new Error("No card is available to draw")
+    }
+
+    if (this.#drawPile.size === 0) {
+      this.recycleDiscardPile()
+    }
+    return card
+  }
+
+  private recycleDiscardPile(): void {
+    const [topCard, ...recycledCards] = this.#discardPile.toMemento()
+    if (topCard === undefined || recycledCards.length === 0) return
+
+    this.#discardPile = new Deck([topCard])
+    this.#drawPile = new Deck(recycledCards)
+    this.#drawPile.shuffle(this.#shuffler)
   }
 
   private nextPlayer(): number {

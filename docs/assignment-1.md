@@ -71,7 +71,8 @@ The reference extraction must remain pristine. When implementation begins, estab
 - A1.8 complete
 - A1.9 complete
 - A1.10 complete
-- A1.11 Draw-pile recycling not started
+- A1.11 complete
+- A1.12 UNO declaration and catching not started
 
 ## Notes
 
@@ -89,3 +90,4 @@ The reference extraction must remain pristine. When implementation begins, estab
 
 - Draw Two uses the same forced-card transfer helper as startup penalties, then advances two positions in the current direction. Forced cards never enter the voluntary playable-draw phase.
 - Wild keeps its chosen color in Round state and advances normally. Wild Draw Four reuses the forced-penalty path with four cards and a two-position advance; neither wild card gains a serialized color field.
+- All voluntary and forced draws use one card source. Taking the last draw-pile card immediately keeps the current discard top, moves older discards into a new shuffled draw pile, and continues multi-card penalties across that boundary without changing voluntary-draw state.

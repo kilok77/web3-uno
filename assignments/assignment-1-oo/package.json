@@ -10,6 +10,7 @@
     "test:supplied:draw-two": "jest --runInBand --runTestsByPath __test__/model/round.draw-two.test.ts",
     "test:supplied:legal-plays": "jest --runInBand --runTestsByPath __test__/model/round.legal.plays.test.ts",
     "test:supplied:ordinary-play": "jest --runInBand --runTestsByPath __test__/model/round.ordinary.playing.test.ts",
+    "test:supplied:recycling": "jest --runInBand --runTestsByPath __test__/model/round.recycling.test.ts",
     "test:supplied:round-start": "jest --runInBand --runTestsByPath __test__/model/round.start.test.ts",
     "test:supplied:skip-reverse": "jest --runInBand --runTestsByPath __test__/model/round.skip-reverse.test.ts",
     "test:supplied:wild": "jest --runInBand --runTestsByPath __test__/model/round.wild.test.ts",
