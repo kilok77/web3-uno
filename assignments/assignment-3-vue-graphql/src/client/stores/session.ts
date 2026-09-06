@@ -59,6 +59,7 @@ export const useSessionStore = defineStore("session", {
       if (this.token === null) return
       try {
         const result = await apolloClient.query<{ me: Player }>({ query: ME, fetchPolicy: "network-only" })
+        if (result.data === undefined) throw new Error("Unable to restore session")
         this.player = result.data.me
         await this.loadGames()
       } catch {
@@ -97,6 +98,7 @@ export const useSessionStore = defineStore("session", {
     },
     async loadGames() {
       const result = await apolloClient.query<{ games: GameSummary[] }>({ query: GAMES, fetchPolicy: "network-only" })
+      if (result.data === undefined) throw new Error("Unable to load games")
       this.games = result.data.games
     },
     async createGame(name: string, maxPlayers: number) {
@@ -108,6 +110,7 @@ export const useSessionStore = defineStore("session", {
     async openGame(gameId: string) {
       await this.run(async () => {
         const result = await apolloClient.query<{ game: GameView }>({ query: GET_GAME, variables: { id: gameId }, fetchPolicy: "network-only" })
+        if (result.data === undefined) throw new Error("Unable to load game")
         this.setGame(result.data.game)
       })
     },
