@@ -1,14 +1,14 @@
 import * as _ from 'lodash'
-import {
-  colors,
-  createInitialDeck,
-  type Card,
-  type Color,
-  type Deck,
-} from './deck'
+import { colors, createInitialDeck, type Card, type Color, type Deck } from './deck'
 import { standardShuffler, type Shuffler } from '../utils/random_utils'
 
 export type Direction = 'clockwise' | 'counterclockwise'
+
+type Accusation = { readonly accuser: number; readonly accused: number }
+type InitialDiscard = Card & {
+  readonly type: 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW'
+  readonly color: Color
+}
 
 export type Round = {
   readonly players: ReadonlyArray<string>
@@ -38,17 +38,6 @@ export type RoundMemento = {
   readonly playerInTurn?: number
 }
 
-type Accusation = { readonly accuser: number; readonly accused: number }
-type InitialDiscard = Card & {
-  readonly type: 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW'
-  readonly color: Color
-}
-type DrawState = {
-  readonly card: Card
-  readonly drawPile: Deck
-  readonly discardPile: Deck
-}
-
 export function createRound(
   players: ReadonlyArray<string>,
   dealer: number,
@@ -67,7 +56,6 @@ export function createRound(
 
   const initial = takeInitialDiscard(drawPile, shuffler)
   drawPile = initial.drawPile
-  const discardPile: Deck = [initial.card]
 
   let direction: Direction = 'clockwise'
   let playerInTurn = advance(dealer, 1, players.length)
@@ -98,12 +86,11 @@ export function createRound(
     dealer,
     hands: resolvedHands,
     drawPile,
-    discardPile,
+    discardPile: [copyCard(initial.card)],
     playerInTurn,
     currentColor: initial.card.color,
     direction,
     shuffler,
-    unoVulnerablePlayers: [],
   })
 }
 
@@ -127,7 +114,6 @@ export function createRoundFromMemento(
     currentColor: memento.currentColor,
     direction: memento.currentDirection,
     shuffler,
-    unoVulnerablePlayers: [],
   })
 }
 
@@ -144,18 +130,15 @@ export function toMemento(round: Round): RoundMemento {
   return round.playerInTurn === undefined ? base : { ...base, playerInTurn: round.playerInTurn }
 }
 
-export function topOfDiscard(round: Round): Card | undefined {
-  return round.discardPile[0]
-}
+export const topOfDiscard = (round: Round): Card | undefined => round.discardPile[0]
 
 export function canPlay(cardIndex: number, round: Round): boolean {
   if (hasEnded(round) || round.playerInTurn === undefined) return false
   const hand = round.hands[round.playerInTurn]
   if (!isCardIndex(cardIndex, hand.length)) return false
-  if (round._playableDrawnCardIndex !== undefined && round._playableDrawnCardIndex !== cardIndex) return false
-  const card = hand[cardIndex]
+  if (round._playableDrawnCardIndex !== undefined && cardIndex !== round._playableDrawnCardIndex) return false
   const top = topOfDiscard(round)
-  return top !== undefined && isPlayable(card, top, round.currentColor, hand)
+  return top !== undefined && isPlayable(hand[cardIndex], top, round.currentColor, hand)
 }
 
 export function canPlayAny(round: Round): boolean {
@@ -176,44 +159,39 @@ export function play(cardIndex: number, selectedColor: Color | undefined, round:
   if (wild && (selectedColor === undefined || !colors.includes(selectedColor))) {
     throw new Error('A Wild card requires a selected color')
   }
-  if (!wild && selectedColor !== undefined) {
-    throw new Error('A colored card cannot select a color')
-  }
+  if (!wild && selectedColor !== undefined) throw new Error('A colored card cannot select a color')
 
   const declaredUno = round._declaredUnoPlayer === actor
   const nextHand = [...hand.slice(0, cardIndex), ...hand.slice(cardIndex + 1)]
-  let next: Round = makeRound({
-    ...roundData(round),
+  let next = makeRound({
+    ...data(round),
     hands: replaceAt(round.hands, actor, nextHand),
     discardPile: [copyCard(card), ...round.discardPile.map(copyCard)],
-    currentColor: wild ? selectedColor as Color : requireColor(card),
+    currentColor: wild ? selectedColor as Color : card.color,
     playableDrawnCardIndex: undefined,
     declaredUnoPlayer: undefined,
     unoVulnerablePlayers: [],
   })
 
-  next = applyPlayedCardEffect(card, next)
-
+  next = applyCardEffect(card, next)
   if (next.hands[actor].length === 0) {
-    return makeRound({ ...roundData(next), playerInTurn: undefined, declaredUnoPlayer: undefined, unoVulnerablePlayers: [] })
+    return makeRound({ ...data(next), playerInTurn: undefined, unoVulnerablePlayers: [], declaredUnoPlayer: undefined })
   }
   if (next.hands[actor].length === 1 && !declaredUno) {
-    return makeRound({ ...roundData(next), unoVulnerablePlayers: [actor] })
+    return makeRound({ ...data(next), unoVulnerablePlayers: [actor] })
   }
   return next
 }
 
 export function draw(round: Round): Round {
   assertInProgress(round)
-  if (round._playableDrawnCardIndex !== undefined) {
-    throw new Error('The playable drawn card must be played')
-  }
+  if (round._playableDrawnCardIndex !== undefined) throw new Error('The playable drawn card must be played')
 
   const actor = round.playerInTurn as number
   const taken = takeDrawCard(round.drawPile, round.discardPile, round._shuffler)
   const newHand = [...round.hands[actor], copyCard(taken.card)]
   const next = makeRound({
-    ...roundData(round),
+    ...data(round),
     hands: replaceAt(round.hands, actor, newHand),
     drawPile: taken.drawPile,
     discardPile: taken.discardPile,
@@ -224,7 +202,7 @@ export function draw(round: Round): Round {
   const drawnIndex = newHand.length - 1
   const top = topOfDiscard(next)
   if (top !== undefined && isPlayable(taken.card, top, next.currentColor, newHand)) {
-    return makeRound({ ...roundData(next), playableDrawnCardIndex: drawnIndex })
+    return makeRound({ ...data(next), playableDrawnCardIndex: drawnIndex })
   }
   return advanceTurn(next)
 }
@@ -232,16 +210,14 @@ export function draw(round: Round): Round {
 export function sayUno(playerIndex: number, round: Round): Round {
   assertInProgress(round)
   assertPlayerIndex(playerIndex, round.playerCount)
-
   if (round._unoVulnerablePlayers.includes(playerIndex)) {
     return makeRound({
-      ...roundData(round),
+      ...data(round),
       unoVulnerablePlayers: round._unoVulnerablePlayers.filter(index => index !== playerIndex),
     })
   }
-
   if (playerIndex === round.playerInTurn && round.hands[playerIndex].length === 2) {
-    return makeRound({ ...roundData(round), declaredUnoPlayer: playerIndex })
+    return makeRound({ ...data(round), declaredUnoPlayer: playerIndex })
   }
   return round
 }
@@ -253,40 +229,35 @@ export function checkUnoFailure({ accused }: Accusation, round: Round): boolean 
 
 export function catchUnoFailure(accusation: Accusation, round: Round): Round {
   if (!checkUnoFailure(accusation, round)) return round
-  const forced = drawCardsToPlayer(round, accusation.accused, 4)
+  const penalized = drawCardsToPlayer(round, accusation.accused, 4)
   return makeRound({
-    ...roundData(forced),
-    unoVulnerablePlayers: forced._unoVulnerablePlayers.filter(index => index !== accusation.accused),
+    ...data(penalized),
+    unoVulnerablePlayers: penalized._unoVulnerablePlayers.filter(index => index !== accusation.accused),
   })
 }
 
-export function hasEnded(round: Round): boolean {
-  return round.hands.some(hand => hand.length === 0)
-}
+export const hasEnded = (round: Round): boolean => round.hands.some(hand => hand.length === 0)
 
 export function winner(round: Round): number | undefined {
-  const index = round.hands.findIndex(hand => hand.length === 0)
-  return index === -1 ? undefined : index
+  const found = round.hands.findIndex(hand => hand.length === 0)
+  return found === -1 ? undefined : found
 }
 
 export function score(round: Round): number | undefined {
   const winningPlayer = winner(round)
   if (winningPlayer === undefined) return undefined
-  return _.sum(
-    round.hands.map((hand, playerIndex) =>
-      playerIndex === winningPlayer ? 0 : _.sum(hand.map(scoreCard)),
-    ),
-  )
+  return _.sum(round.hands.map((hand, index) =>
+    index === winningPlayer ? 0 : _.sum(hand.map(scoreCard)),
+  ))
 }
 
-function applyPlayedCardEffect(card: Card, round: Round): Round {
+function applyCardEffect(card: Card, round: Round): Round {
   switch (card.type) {
     case 'SKIP':
       return advanceTurn(round, 2)
     case 'REVERSE': {
       const direction: Direction = round.direction === 'clockwise' ? 'counterclockwise' : 'clockwise'
-      const reversed = makeRound({ ...roundData(round), direction })
-      return advanceTurn(reversed, round.playerCount === 2 ? 2 : 1)
+      return advanceTurn(makeRound({ ...data(round), direction }), round.playerCount === 2 ? 2 : 1)
     }
     case 'DRAW':
       return applyDrawPenalty(round, 2)
@@ -299,17 +270,16 @@ function applyPlayedCardEffect(card: Card, round: Round): Round {
 }
 
 function applyDrawPenalty(round: Round, count: number): Round {
-  if (round.playerInTurn === undefined) return round
-  const penalized = nextPlayer(round)
-  return advanceTurn(drawCardsToPlayer(round, penalized, count), 2)
+  const target = nextPlayer(round)
+  return advanceTurn(drawCardsToPlayer(round, target, count), 2)
 }
 
 function drawCardsToPlayer(round: Round, playerIndex: number, count: number): Round {
   let drawPile: Deck = round.drawPile
   let discardPile: Deck = round.discardPile
-  let hand: ReadonlyArray<Card> = [...round.hands[playerIndex]]
+  let hand: ReadonlyArray<Card> = round.hands[playerIndex]
 
-  for (const _index of _.range(count)) {
+  for (const _ of _.range(count)) {
     const taken = takeDrawCard(drawPile, discardPile, round._shuffler)
     hand = [...hand, copyCard(taken.card)]
     drawPile = taken.drawPile
@@ -317,18 +287,22 @@ function drawCardsToPlayer(round: Round, playerIndex: number, count: number): Ro
   }
 
   return makeRound({
-    ...roundData(round),
+    ...data(round),
     hands: replaceAt(round.hands, playerIndex, hand),
     drawPile,
     discardPile,
   })
 }
 
-function takeDrawCard(drawPile: Deck, discardPile: Deck, shuffler: Shuffler<Card>): DrawState {
-  let available: Deck = drawPile.map(copyCard)
-  let discard: Deck = discardPile.map(copyCard)
+function takeDrawCard(drawPile: Deck, discardPile: Deck, shuffler: Shuffler<Card>): {
+  readonly card: Card
+  readonly drawPile: Deck
+  readonly discardPile: Deck
+} {
+  let available: Deck = drawPile
+  let discard: Deck = discardPile
   if (available.length === 0) {
-    const recycled = recycleDiscardPile(available, discard, shuffler)
+    const recycled = recycle(discard, shuffler)
     available = recycled.drawPile
     discard = recycled.discardPile
   }
@@ -338,36 +312,32 @@ function takeDrawCard(drawPile: Deck, discardPile: Deck, shuffler: Shuffler<Card
   available = available.slice(1)
 
   if (available.length === 0) {
-    const recycled = recycleDiscardPile(available, discard, shuffler)
+    const recycled = recycle(discard, shuffler)
     available = recycled.drawPile
     discard = recycled.discardPile
   }
-  return { card: copyCard(card), drawPile: available, discardPile: discard }
+  return { card: copyCard(card), drawPile: available.map(copyCard), discardPile: discard.map(copyCard) }
 }
 
-function recycleDiscardPile(drawPile: Deck, discardPile: Deck, shuffler: Shuffler<Card>): {
+function recycle(discardPile: Deck, shuffler: Shuffler<Card>): {
   readonly drawPile: Deck
   readonly discardPile: Deck
 } {
   const [top, ...older] = discardPile
-  if (top === undefined || older.length === 0) return { drawPile, discardPile }
-  return {
-    discardPile: [copyCard(top)],
-    drawPile: shuffler(older.map(copyCard)).map(copyCard),
-  }
+  if (top === undefined || older.length === 0) return { drawPile: [], discardPile }
+  return { drawPile: shuffler(older.map(copyCard)).map(copyCard), discardPile: [copyCard(top)] }
 }
 
 function takeInitialDiscard(drawPile: Deck, shuffler: Shuffler<Card>): {
   readonly card: InitialDiscard
   readonly drawPile: Deck
 } {
-  let available: Deck = drawPile.map(copyCard)
+  let available: Deck = drawPile
   while (true) {
     const [candidate, ...remaining] = available
     if (candidate === undefined) throw new Error('The deck does not contain an initial discard')
     if (candidate.type !== 'WILD' && candidate.type !== 'WILD DRAW') {
-      if (candidate.color === undefined) throw new Error('A colored discard requires a color')
-      return { card: candidate as InitialDiscard, drawPile: remaining }
+      return { card: candidate as InitialDiscard, drawPile: remaining.map(copyCard) }
     }
     available = shuffler([...remaining, candidate]).map(copyCard)
   }
@@ -380,20 +350,16 @@ function drawInitialCards(
   count: number,
 ): { readonly hands: ReadonlyArray<ReadonlyArray<Card>>; readonly drawPile: Deck } {
   if (drawPile.length < count) throw new Error('The draw pile does not contain enough cards')
-  const cards = drawPile.slice(0, count)
   return {
-    hands: replaceAt(hands, playerIndex, [...hands[playerIndex], ...cards.map(copyCard)]),
+    hands: replaceAt(hands, playerIndex, [...hands[playerIndex], ...drawPile.slice(0, count).map(copyCard)]),
     drawPile: drawPile.slice(count).map(copyCard),
   }
 }
 
 function advanceTurn(round: Round, distance = 1): Round {
   if (round.playerInTurn === undefined) return round
-  const signedDistance = round.direction === 'clockwise' ? distance : -distance
-  return makeRound({
-    ...roundData(round),
-    playerInTurn: advance(round.playerInTurn, signedDistance, round.playerCount),
-  })
+  const delta = round.direction === 'clockwise' ? distance : -distance
+  return makeRound({ ...data(round), playerInTurn: advance(round.playerInTurn, delta, round.playerCount) })
 }
 
 function nextPlayer(round: Round): number {
@@ -403,21 +369,17 @@ function nextPlayer(round: Round): number {
 
 function isPlayable(card: Card, top: Card, currentColor: Color, hand: ReadonlyArray<Card>): boolean {
   if (card.type === 'WILD') return true
-  if (card.type === 'WILD DRAW') {
-    return !hand.some(held => held.color === currentColor)
-  }
+  if (card.type === 'WILD DRAW') return !hand.some(held => held.type !== 'WILD' && held.type !== 'WILD DRAW' && held.color === currentColor)
   if (card.color === currentColor) return true
   if (card.type === 'NUMBERED' && top.type === 'NUMBERED') return card.number === top.number
-  return isActionCard(card) && isActionCard(top) && card.type === top.type
+  return isAction(card) && isAction(top) && card.type === top.type
 }
 
-function isActionCard(card: Card): boolean {
-  return card.type === 'SKIP' || card.type === 'REVERSE' || card.type === 'DRAW'
-}
+const isAction = (card: Card): boolean => card.type === 'SKIP' || card.type === 'REVERSE' || card.type === 'DRAW'
 
 function scoreCard(card: Card): number {
   switch (card.type) {
-    case 'NUMBERED': return card.number ?? 0
+    case 'NUMBERED': return card.number
     case 'SKIP':
     case 'REVERSE':
     case 'DRAW': return 20
@@ -458,7 +420,7 @@ function makeRound(input: {
   }
 }
 
-function roundData(round: Round) {
+function data(round: Round) {
   return {
     players: round.players,
     dealer: round.dealer,
@@ -479,45 +441,27 @@ function replaceAt<T>(items: ReadonlyArray<T>, index: number, value: T): Readonl
   return items.map((item, current) => current === index ? value : item)
 }
 
-function advance(player: number, distance: number, playerCount: number): number {
-  return ((player + distance) % playerCount + playerCount) % playerCount
-}
-
-function isCardIndex(index: number, handSize: number): boolean {
-  return Number.isInteger(index) && index >= 0 && index < handSize
-}
-
-function requireColor(card: Card): Color {
-  if (card.color === undefined) throw new Error('Colored cards require a color')
-  return card.color
-}
+const advance = (player: number, distance: number, count: number): number => ((player + distance) % count + count) % count
+const isCardIndex = (index: number, size: number): boolean => Number.isInteger(index) && index >= 0 && index < size
 
 function assertInProgress(round: Round): void {
   if (hasEnded(round) || round.playerInTurn === undefined) throw new Error('The Round has ended')
 }
-
 function assertPlayerCount(count: number): void {
   if (count < 2 || count > 10) throw new Error('A Round requires between 2 and 10 players')
 }
-
 function assertPlayerIndex(index: number, count: number): void {
   if (!Number.isInteger(index) || index < 0 || index >= count) throw new Error('Player index is out of bounds')
 }
-
 function assertStartingHandSize(cardsPerPlayer: number, playerCount: number): void {
-  if (!Number.isInteger(cardsPerPlayer) || cardsPerPlayer < 0 || cardsPerPlayer * playerCount >= 108) {
-    throw new Error('Invalid starting hand size')
-  }
+  if (!Number.isInteger(cardsPerPlayer) || cardsPerPlayer < 0 || cardsPerPlayer * playerCount >= 108) throw new Error('Invalid starting hand size')
 }
-
 function assertDealer(dealer: number): void {
   if (!Number.isInteger(dealer)) throw new Error('Dealer must be an integer')
 }
 
 function copyCard(card: Card): Card {
   if (card.type === 'NUMBERED') return { type: card.type, color: card.color, number: card.number }
-  if (card.type === 'SKIP' || card.type === 'REVERSE' || card.type === 'DRAW') {
-    return { type: card.type, color: card.color }
-  }
-  return { type: card.type }
+  if (card.type === 'SKIP' || card.type === 'REVERSE' || card.type === 'DRAW') return { type: card.type, color: card.color } as Card
+  return { type: card.type } as Card
 }
