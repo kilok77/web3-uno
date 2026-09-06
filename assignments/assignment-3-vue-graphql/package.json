@@ -1,0 +1,40 @@
+{
+  "name": "web3-uno-assignment-3-vue-graphql",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n server,client \"npm:dev:server\" \"npm:dev:client\"",
+    "dev:server": "tsx watch src/server/index.ts",
+    "dev:client": "vite",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run",
+    "build": "npm run typecheck && vite build && tsup src/server/index.ts --format esm --platform node --out-dir dist-server",
+    "start": "node dist-server/index.js"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.1.0",
+    "@apollo/server": "^5.0.0",
+    "@graphql-tools/schema": "^10.0.25",
+    "graphql": "^16.11.0",
+    "graphql-ws": "^6.0.6",
+    "pinia": "^4.0.3",
+    "vue": "^3.5.42",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.20.5",
+    "tsup": "^8.5.0",
+    "typescript": "5.9.3",
+    "vite": "^8.2.2",
+    "vitest": "^5.0.0",
+    "vue-tsc": "^3.3.11"
+  }
+}
