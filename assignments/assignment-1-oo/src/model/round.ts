@@ -32,6 +32,9 @@ export type RoundMemento = {
   readonly playerInTurn: number
 }
 
+export type RoundEndEvent = { readonly winner: number }
+export type RoundEndCallback = (event: RoundEndEvent) => void
+
 type RestoredRoundState = Omit<
   RoundMemento,
   "players" | "dealer"
@@ -50,6 +53,8 @@ export class Round {
   readonly #shuffler: Shuffler<Card>
   readonly #unoVulnerablePlayers: Set<number>
   #declaredUnoPlayer: number | undefined
+  #winnerIndex: number | undefined
+  readonly #endCallbacks: RoundEndCallback[]
 
   readonly dealer: number
 
@@ -65,6 +70,8 @@ export class Round {
     this.#playableDrawnCardIndex = undefined
     this.#unoVulnerablePlayers = new Set()
     this.#declaredUnoPlayer = undefined
+    this.#winnerIndex = undefined
+    this.#endCallbacks = []
 
     if (restoredState !== undefined) {
       this.#hands = restoredState.hands.map(cards =>
@@ -124,8 +131,8 @@ export class Round {
     return this.#discardPile
   }
 
-  playerInTurn(): number {
-    return this.#playerInTurn
+  playerInTurn(): number | undefined {
+    return this.#winnerIndex === undefined ? this.#playerInTurn : undefined
   }
 
   currentColor(): Color {
@@ -137,6 +144,7 @@ export class Round {
   }
 
   canPlay(cardIndex: number): boolean {
+    if (this.hasEnded()) return false
     const hand = this.#hands[this.#playerInTurn]
     if (!isCardIndex(cardIndex, hand.size)) return false
     if (
@@ -154,11 +162,13 @@ export class Round {
   }
 
   canPlayAny(): boolean {
+    if (this.hasEnded()) return false
     const hand = this.#hands[this.#playerInTurn]
     return hand.cards.some((_, index) => this.canPlay(index))
   }
 
   play(cardIndex: number, selectedColor?: Color): Card {
+    this.assertInProgress()
     const actor = this.#playerInTurn
     const hand = this.#hands[actor]
     const card = hand.at(cardIndex)
@@ -195,13 +205,16 @@ export class Round {
     this.#currentColor = nextColor
     this.#playableDrawnCardIndex = undefined
     this.applyPlayedCardEffect(played)
-    if (hand.size === 1 && !declaredUno) {
+    if (hand.size === 0) {
+      this.complete(actor)
+    } else if (hand.size === 1 && !declaredUno) {
       this.#unoVulnerablePlayers.add(actor)
     }
     return played
   }
 
   draw(): void {
+    this.assertInProgress()
     if (this.#playableDrawnCardIndex !== undefined) {
       throw new Error("The playable drawn card must be played or declined")
     }
@@ -226,6 +239,7 @@ export class Round {
   }
 
   sayUno(playerIndex: number): void {
+    this.assertInProgress()
     assertPlayerIndex(playerIndex, this.playerCount)
 
     if (this.#unoVulnerablePlayers.delete(playerIndex)) return
@@ -247,6 +261,44 @@ export class Round {
     this.drawCards(this.#hands[accused], 4)
     this.#unoVulnerablePlayers.delete(accused)
     return true
+  }
+
+  hasEnded(): boolean {
+    return this.#winnerIndex !== undefined
+  }
+
+  winner(): number | undefined {
+    return this.#winnerIndex
+  }
+
+  score(): number | undefined {
+    if (this.#winnerIndex === undefined) return undefined
+
+    return this.#hands.reduce((total, hand, playerIndex) => {
+      if (playerIndex === this.#winnerIndex) return total
+      return total + hand.cards.reduce(
+        (handScore, card) => handScore + scoreCard(card),
+        0,
+      )
+    }, 0)
+  }
+
+  onEnd(callback: RoundEndCallback): void {
+    this.#endCallbacks.push(callback)
+  }
+
+  private complete(winner: number): void {
+    if (this.#winnerIndex !== undefined) return
+
+    this.#winnerIndex = winner
+    this.#declaredUnoPlayer = undefined
+    this.#unoVulnerablePlayers.clear()
+    const event: RoundEndEvent = { winner }
+    for (const callback of this.#endCallbacks) callback(event)
+  }
+
+  private assertInProgress(): void {
+    if (this.hasEnded()) throw new Error("The Round has ended")
   }
 
   private beginAction(actor: number): boolean {
@@ -496,6 +548,20 @@ function isActionCard(
 
 function isCardIndex(index: number, handSize: number): boolean {
   return Number.isInteger(index) && index >= 0 && index < handSize
+}
+
+function scoreCard(card: Card): number {
+  switch (card.type) {
+    case "NUMBERED":
+      return card.number
+    case "SKIP":
+    case "REVERSE":
+    case "DRAW":
+      return 20
+    case "WILD":
+    case "WILD DRAW":
+      return 50
+  }
 }
 
 function assertPlayerCount(playerCount: number): void {

@@ -73,7 +73,8 @@ The reference extraction must remain pristine. When implementation begins, estab
 - A1.10 complete
 - A1.11 complete
 - A1.12 complete
-- A1.13 Round completion and scoring not started
+- A1.13 complete
+- A1.14 Round mementos not started
 
 ## Notes
 
@@ -93,3 +94,4 @@ The reference extraction must remain pristine. When implementation begins, estab
 - Wild keeps its chosen color in Round state and advances normally. Wild Draw Four reuses the forced-penalty path with four cards and a two-position advance; neither wild card gains a serialized color field.
 - All voluntary and forced draws use one card source. Taking the last draw-pile card immediately keeps the current discard top, moves older discards into a new shuffled draw pile, and continues multi-card penalties across that boundary without changing voluntary-draw state.
 - UNO timing uses explicit declaration and vulnerability state. A penultimate play consumes a just-in-time declaration or exposes its actor; self-correction and successful catching clear exposure, while the next valid play/draw expires the prior window. Catch penalties reuse forced draws.
+- Round completion occurs only after the winning card's effect and forced penalty resolve. Winner state gates later actions, score is derived centrally from opponents' final cards, and registered end callbacks fire once at completion.

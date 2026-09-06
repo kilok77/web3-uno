@@ -9,14 +9,17 @@ function drainTo(round: ReturnType<typeof createRound>, remaining: number): void
 
 describe("draw-pile recycling invariants", () => {
   it("conserves cards while retaining the current discard top", () => {
-    const initialShuffle = shuffleBuilder({ players: 2, cardsPerPlayer: 1 })
+    const initialShuffle = shuffleBuilder({ players: 2, cardsPerPlayer: 2 })
       .discard().is({ type: "NUMBERED", color: "BLUE", number: 8 })
-      .hand(0).is({ type: "NUMBERED", color: "BLUE", number: 3 })
+      .hand(0).is(
+        { type: "NUMBERED", color: "BLUE", number: 3 },
+        { type: "NUMBERED", color: "RED", number: 7 },
+      )
       .build()
     const round = createRound({
       players: ["a", "b"],
       dealer: 1,
-      cardsPerPlayer: 1,
+      cardsPerPlayer: 2,
       shuffler: successiveShufflers(initialShuffle),
     })
     round.play(0)
@@ -38,16 +41,22 @@ describe("draw-pile recycling invariants", () => {
   })
 
   it("does not create voluntary-draw state during a recycled penalty", () => {
-    const initialShuffle = shuffleBuilder({ players: 4, cardsPerPlayer: 1 })
+    const initialShuffle = shuffleBuilder({ players: 4, cardsPerPlayer: 2 })
       .discard().is({ type: "NUMBERED", color: "BLUE", number: 3 })
-      .hand(0).is({ type: "NUMBERED", color: "BLUE", number: 5 })
-      .hand(1).is({ type: "DRAW", color: "BLUE" })
+      .hand(0).is(
+        { type: "NUMBERED", color: "BLUE", number: 5 },
+        { type: "NUMBERED", color: "RED", number: 7 },
+      )
+      .hand(1).is(
+        { type: "DRAW", color: "BLUE" },
+        { type: "NUMBERED", color: "YELLOW", number: 8 },
+      )
       .hand(3).is({ type: "NUMBERED", color: "BLUE", number: 9 })
       .build()
     const round = createRound({
       players: ["a", "b", "c", "d"],
       dealer: 3,
-      cardsPerPlayer: 1,
+      cardsPerPlayer: 2,
       shuffler: successiveShufflers(initialShuffle),
     })
     round.play(0)

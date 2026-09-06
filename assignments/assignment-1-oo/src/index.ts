@@ -25,4 +25,10 @@ export { Hand } from "./model/hand"
 export type { HandView } from "./model/hand"
 
 export { createRound, createRoundFromMemento, Round } from "./model/round"
-export type { Direction, RoundConfig, RoundMemento } from "./model/round"
+export type {
+  Direction,
+  RoundConfig,
+  RoundEndCallback,
+  RoundEndEvent,
+  RoundMemento,
+} from "./model/round"

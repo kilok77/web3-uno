@@ -8,6 +8,7 @@
     "test:hand": "jest --runInBand --runTestsByPath test/model/hand.test.ts",
     "test:supplied:deck": "jest --runInBand --runTestsByPath __test__/model/deck.test.ts",
     "test:supplied:draw-two": "jest --runInBand --runTestsByPath __test__/model/round.draw-two.test.ts",
+    "test:supplied:round-ending": "jest --runInBand --runTestsByPath __test__/model/round.ending.test.ts",
     "test:supplied:legal-plays": "jest --runInBand --runTestsByPath __test__/model/round.legal.plays.test.ts",
     "test:supplied:ordinary-play": "jest --runInBand --runTestsByPath __test__/model/round.ordinary.playing.test.ts",
     "test:supplied:recycling": "jest --runInBand --runTestsByPath __test__/model/round.recycling.test.ts",

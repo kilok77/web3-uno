@@ -17,16 +17,19 @@ describe("drawing the last card", () => {
   let retainedTop: Card | undefined
 
   beforeEach(() => {
-    const initialShuffle = shuffleBuilder({ players: 2, cardsPerPlayer: 1 })
+    const initialShuffle = shuffleBuilder({ players: 2, cardsPerPlayer: 2 })
       .discard().is({ type: "NUMBERED", color: "BLUE", number: 8 })
-      .hand(0).is({ type: "NUMBERED", color: "BLUE", number: 3 })
+      .hand(0).is(
+        { type: "NUMBERED", color: "BLUE", number: 3 },
+        { type: "NUMBERED", color: "RED", number: 7 },
+      )
       .build()
     recycleShuffler = jest.fn<Shuffler<Card>>(standardShuffler)
     const shuffler = successiveShufflers(initialShuffle, recycleShuffler)
     round = createRound({
       players: ["a", "b"],
       dealer: 1,
-      cardsPerPlayer: 1,
+      cardsPerPlayer: 2,
       shuffler,
     })
     round.play(0)
@@ -60,15 +63,21 @@ describe("drawing the last card", () => {
 
 describe("when drawing because of a card", () => {
   it("continues a forced Draw Two across the recycling boundary", () => {
-    const initialShuffle = shuffleBuilder({ players: 4, cardsPerPlayer: 1 })
+    const initialShuffle = shuffleBuilder({ players: 4, cardsPerPlayer: 2 })
       .discard().is({ type: "NUMBERED", color: "BLUE", number: 3 })
-      .hand(0).is({ type: "NUMBERED", color: "BLUE", number: 5 })
-      .hand(1).is({ type: "DRAW", color: "BLUE" })
+      .hand(0).is(
+        { type: "NUMBERED", color: "BLUE", number: 5 },
+        { type: "NUMBERED", color: "RED", number: 7 },
+      )
+      .hand(1).is(
+        { type: "DRAW", color: "BLUE" },
+        { type: "NUMBERED", color: "YELLOW", number: 9 },
+      )
       .build()
     const round = createRound({
       players: ["a", "b", "c", "d"],
       dealer: 3,
-      cardsPerPlayer: 1,
+      cardsPerPlayer: 2,
       shuffler: successiveShufflers(initialShuffle),
     })
     round.play(0)
@@ -76,7 +85,7 @@ describe("when drawing because of a card", () => {
 
     round.play(0)
 
-    expect(round.playerHand(2).length).toEqual(3)
+    expect(round.playerHand(2).length).toEqual(4)
     expect(round.discardPile().size).toEqual(1)
     expect(round.drawPile().size).toEqual(1)
   })
