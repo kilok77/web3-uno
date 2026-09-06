@@ -26,9 +26,9 @@ A1 OO model ─────┤                                                  
 |------------|-------|--------|
 | 1 | OO UNO model | Complete — full supplied suite green |
 | 2 | Vue + Web Workers | Complete — typecheck, tests, and production build green |
-| 3 | GraphQL multiplayer | Not started |
+| 3 | GraphQL multiplayer | Complete — authoritative multiplayer, persistence, subscriptions, tests, and build green |
 | 4 | Functional UNO | Not started |
 | 5 | React + Redux + RxJS | Not started |
 | 6 | Next.js SSR | Not started |
 
-Current implementation target: Assignment 3, which moves the Vue client to an authoritative Apollo GraphQL server with human multiplayer.
+Current implementation target: Assignment 4, the immutable functional rewrite of the UNO domain model.
