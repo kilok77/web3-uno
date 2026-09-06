@@ -137,7 +137,12 @@ export class Round {
     if (!isWild && selectedColor !== undefined) {
       throw new Error("A colored card cannot select a color")
     }
-    if (card.type !== "NUMBERED" && card.type !== "WILD") {
+    if (
+      card.type !== "NUMBERED"
+      && card.type !== "SKIP"
+      && card.type !== "REVERSE"
+      && card.type !== "WILD"
+    ) {
       throw new Error("This card's play effect is not implemented yet")
     }
     const nextColor = card.type === "WILD"
@@ -150,7 +155,7 @@ export class Round {
     this.#discardPile = new Deck([played, ...this.#discardPile.toMemento()])
     this.#currentColor = nextColor
     this.#playableDrawnCardIndex = undefined
-    this.advanceTurn()
+    this.applyPlayedCardEffect(played)
     return played
   }
 
@@ -179,10 +184,34 @@ export class Round {
     this.advanceTurn()
   }
 
-  private advanceTurn(): void {
+  private applyPlayedCardEffect(card: Card): void {
+    switch (card.type) {
+      case "SKIP":
+        this.advanceTurn(2)
+        return
+
+      case "REVERSE":
+        this.#currentDirection = this.#currentDirection === "clockwise"
+          ? "counterclockwise"
+          : "clockwise"
+        this.advanceTurn(this.playerCount === 2 ? 2 : 1)
+        return
+
+      case "NUMBERED":
+      case "WILD":
+        this.advanceTurn()
+        return
+
+      case "DRAW":
+      case "WILD DRAW":
+        throw new Error("This card's play effect is not implemented yet")
+    }
+  }
+
+  private advanceTurn(distance = 1): void {
     this.#playerInTurn = advance(
       this.#playerInTurn,
-      this.#currentDirection === "clockwise" ? 1 : -1,
+      this.#currentDirection === "clockwise" ? distance : -distance,
       this.playerCount,
     )
   }

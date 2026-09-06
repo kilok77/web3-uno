@@ -68,7 +68,8 @@ The reference extraction must remain pristine. When implementation begins, estab
 - A1.5 complete
 - A1.6 complete
 - A1.7 complete
-- A1.8 Skip and Reverse effects not started
+- A1.8 complete
+- A1.9 Draw Two behavior not started
 
 ## Notes
 
@@ -82,3 +83,4 @@ The reference extraction must remain pristine. When implementation begins, estab
 - `Round` initialization validates 2–10 players, shuffles once before contiguous dealing, retries wild initial discards within the remaining pile, and applies the tested initial Numbered, Skip, Reverse, and Draw Two state transitions.
 - Round legality is centralized in a non-mutating predicate: color, number, and action-type matches are supported; ordinary Wild is always legal; Wild Draw Four checks only for another card matching the current color.
 - Ordinary Round turns remove and prepend played numbered cards, update color, and advance in the current direction. Drawn cards append to the hand; an unplayable draw advances immediately, while a playable draw retains the turn with only that new card eligible.
+- Skip and Reverse reuse the shared play transition. Skip advances two positions; Reverse flips direction before advancing, and both return play to the actor in a two-player round.
