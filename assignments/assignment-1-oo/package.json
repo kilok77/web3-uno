@@ -5,6 +5,7 @@
   "description": "Object-oriented TypeScript UNO model for WEB3 Assignment 1",
   "scripts": {
     "test": "jest --runInBand",
+    "test:hand": "jest --runInBand --runTestsByPath test/model/hand.test.ts",
     "test:supplied:deck": "jest --runInBand --runTestsByPath __test__/model/deck.test.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:supplied-card-contract": "tsc -p tsconfig.supplied-card.json"

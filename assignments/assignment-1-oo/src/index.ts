@@ -20,3 +20,6 @@ export type {
   TypedCard,
   WildCard,
 } from "./model/deck"
+
+export { Hand } from "./model/hand"
+export type { HandView } from "./model/hand"

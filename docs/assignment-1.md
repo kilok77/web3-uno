@@ -64,7 +64,8 @@ The reference extraction must remain pristine. When implementation begins, estab
 - A1.1 complete
 - A1.2 complete
 - A1.3 complete
-- A1.4 Hand not started
+- A1.4 complete
+- A1.5 Round initialization not started
 
 ## Notes
 
@@ -74,3 +75,4 @@ The reference extraction must remain pristine. When implementation begins, estab
 - Some two-player score fixtures use an out-of-range dealer index and require a narrow decision before implementation.
 - Cards are readonly structural values modeled as a precise discriminated union in `src/model/deck.ts`. `Color` comes from a readonly `colors` tuple, numbered values are restricted to 0–9, `TypedCard<T>` is derived with `Extract`, and `hasColor`/`hasNumber` are narrowing type guards.
 - `Deck` is a mutable object-oriented pile with index 0 as its top. `deal` and injected `shuffle` mutate it; `filter` returns an independent Deck; mementos are ordered plain card arrays validated during restoration.
+- `Hand` owns an ordered card array, exposes a stable live readonly view, appends and removes cards without applying gameplay rules, and serializes to a defensive card-array copy for later Round mementos.
