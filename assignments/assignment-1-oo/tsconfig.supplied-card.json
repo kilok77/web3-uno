@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDirs": [".", "../../reference/tests/oo-model"]
+  },
+  "include": [
+    "src/model/deck.ts",
+    "../../reference/tests/oo-model/__test__/utils/predicates.ts"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "web3-uno-assignment-1-oo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Object-oriented TypeScript UNO model for WEB3 Assignment 1",
+  "scripts": {
+    "test": "jest --runInBand",
+    "typecheck": "tsc --noEmit",
+    "typecheck:supplied-card-contract": "tsc -p tsconfig.supplied-card.json"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.6",
+    "@babel/preset-env": "^7.24.6",
+    "@babel/preset-typescript": "^7.24.6",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "typescript": "^5.4.5"
+  }
+}
