@@ -1,18 +1,12 @@
 {
-  "name": "uno",
-  "version": "0.0.1",
-  "description": "Uno",
-  "main": "index.js",
+  "name": "web3-uno-assignment-4-functional",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Functional immutable UNO model for WEB3 Assignment 4",
   "scripts": {
-    "test": "jest"
+    "typecheck": "tsc --noEmit",
+    "test": "jest --runInBand"
   },
-  "keywords": [
-    "uno",
-    "oo",
-    "functional"
-  ],
-  "author": "Ole Ildsgaard Hougaard",
-  "license": "ISC",
   "dependencies": {
     "@babel/core": "^7.24.6",
     "@babel/preset-env": "^7.24.6",
