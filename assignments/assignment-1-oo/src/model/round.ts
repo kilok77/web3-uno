@@ -141,6 +141,7 @@ export class Round {
       card.type !== "NUMBERED"
       && card.type !== "SKIP"
       && card.type !== "REVERSE"
+      && card.type !== "DRAW"
       && card.type !== "WILD"
     ) {
       throw new Error("This card's play effect is not implemented yet")
@@ -197,15 +198,29 @@ export class Round {
         this.advanceTurn(this.playerCount === 2 ? 2 : 1)
         return
 
+      case "DRAW": {
+        const penalizedPlayer = this.nextPlayer()
+        drawCards(this.#hands[penalizedPlayer], this.#drawPile, 2)
+        this.advanceTurn(2)
+        return
+      }
+
       case "NUMBERED":
       case "WILD":
         this.advanceTurn()
         return
 
-      case "DRAW":
       case "WILD DRAW":
         throw new Error("This card's play effect is not implemented yet")
     }
+  }
+
+  private nextPlayer(): number {
+    return advance(
+      this.#playerInTurn,
+      this.#currentDirection === "clockwise" ? 1 : -1,
+      this.playerCount,
+    )
   }
 
   private advanceTurn(distance = 1): void {
