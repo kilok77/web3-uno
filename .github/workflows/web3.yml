@@ -1,0 +1,41 @@
+name: WEB3 checks
+
+on:
+  push:
+    branches:
+      - main
+      - "chatgpt/**"
+  pull_request:
+
+jobs:
+  assignment-1:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: assignments/assignment-1-oo
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: assignments/assignment-1-oo/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:supplied
+      - run: npm test
+
+  assignment-2:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: assignments/assignment-2-vue-bots
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build

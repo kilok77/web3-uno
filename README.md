@@ -17,18 +17,18 @@ A1 OO model ─────┤                                                  
 - [`docs/domain-contract.md`](docs/domain-contract.md) defines shared conceptual terminology and serialization boundaries.
 - [`docs/implementation-plan.md`](docs/implementation-plan.md) gives the high-level roadmap.
 - [`docs/assignment-1.md`](docs/assignment-1.md) through [`docs/assignment-6.md`](docs/assignment-6.md) track assignment-specific knowledge and status.
-- [`reference/`](reference/) is reserved for original assignment specifications, UNO rules, and supplied tests.
-- [`AGENTS.md`](AGENTS.md) contains repository instructions for future Codex sessions.
+- [`reference/`](reference/) contains the original assignment specifications, UNO rules, and supplied tests.
+- [`AGENTS.md`](AGENTS.md) contains repository instructions for future coding sessions.
 
 ## Progress
 
 | Assignment | Topic | Status |
 |------------|-------|--------|
-| 1 | OO UNO model | In progress — A1.3 complete |
-| 2 | Vue + Web Workers | Not started |
+| 1 | OO UNO model | Complete — full supplied suite green |
+| 2 | Vue + Web Workers | Complete — typecheck, tests, and production build green |
 | 3 | GraphQL multiplayer | Not started |
 | 4 | Functional UNO | Not started |
 | 5 | React + Redux + RxJS | Not started |
 | 6 | Next.js SSR | Not started |
 
-Current status: repository structure and cross-assignment documentation initialized; Assignment 1 card/type and Deck foundations are implemented through A1.3.
+Current implementation target: Assignment 3, which moves the Vue client to an authoritative Apollo GraphQL server with human multiplayer.
