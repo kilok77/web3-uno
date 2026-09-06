@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import type { Card } from "../domain/model/deck"
 import { MemoryPersistence } from "./persistence"
 import { GameService } from "./service"
+import type { PlayerGameView } from "./types"
 
 const noShuffle = (_cards: Card[]) => {}
 const firstDealer = () => 0
@@ -73,7 +74,8 @@ describe("authoritative multiplayer service", () => {
     await service.startGame(alice.token, game.id)
     const update = await iterator.next()
     expect(update.done).toBe(false)
-    const opponent = update.value.players.find(player => player.id === bob.player.id)
+    if (update.done) throw new Error("Expected a game update")
+    const opponent = update.value.players.find((player: PlayerGameView) => player.id === bob.player.id)
     expect(opponent?.cards).toBeUndefined()
     await iterator.return?.()
   })
