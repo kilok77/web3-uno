@@ -12,8 +12,16 @@ import {
 } from "../../src/model/round"
 import {
   standardShuffler,
+  standardRandomizer,
+  type Randomizer,
   type Shuffler,
 } from "../../src/utils/random_utils"
+import {
+  createGame as createModelGame,
+  createGameFromMemento as restoreGame,
+  type Game,
+  type GameMemento,
+} from "../../src/model/uno"
 
 export function createInitialDeck(): Deck {
   return createDeck()
@@ -46,4 +54,30 @@ export function createRoundFromMemento(
   shuffler: Shuffler<Card> = standardShuffler,
 ): Round {
   return restoreRound(memento as RoundMemento, shuffler)
+}
+
+export type GameConfig = {
+  players: string[]
+  targetScore: number
+  randomizer: Randomizer
+  shuffler: Shuffler<Card>
+  cardsPerPlayer: number
+}
+
+export function createGame(props: Partial<GameConfig>): Game {
+  return createModelGame({
+    players: props.players ?? ["A", "B"],
+    targetScore: props.targetScore ?? 500,
+    randomizer: props.randomizer ?? standardRandomizer,
+    shuffler: props.shuffler ?? standardShuffler,
+    cardsPerPlayer: props.cardsPerPlayer ?? 7,
+  })
+}
+
+export function createGameFromMemento(
+  memento: any,
+  randomizer: Randomizer = standardRandomizer,
+  shuffler: Shuffler<Card> = standardShuffler,
+): Game {
+  return restoreGame(memento as GameMemento, randomizer, shuffler)
 }

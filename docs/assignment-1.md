@@ -74,7 +74,16 @@ The reference extraction must remain pristine. When implementation begins, estab
 - A1.11 complete
 - A1.12 complete
 - A1.13 complete
-- A1.14 Round mementos not started
+- A1.14 Round mementos complete
+- A1.15 Game and Game mementos complete
+- Assignment 1 implementation complete
+
+## Final verification
+
+- TypeScript typecheck: passed
+- Original supplied OO suite: 238/238 tests passed across all eight model test files
+- Local regression suite: 213/213 tests passed
+- Combined verification: 451/451 test executions passed (the local regression suite intentionally overlaps the supplied suite)
 
 ## Notes
 
@@ -95,3 +104,6 @@ The reference extraction must remain pristine. When implementation begins, estab
 - All voluntary and forced draws use one card source. Taking the last draw-pile card immediately keeps the current discard top, moves older discards into a new shuffled draw pile, and continues multi-card penalties across that boundary without changing voluntary-draw state.
 - UNO timing uses explicit declaration and vulnerability state. A penultimate play consumes a just-in-time declaration or exposes its actor; self-correction and successful catching clear exposure, while the next valid play/draw expires the prior window. Catch penalties reuse forced draws.
 - Round completion occurs only after the winning card's effect and forced penalty resolve. Winner state gates later actions, score is derived centrally from opponents' final cards, and registered end callbacks fire once at completion.
+- Round mementos serialize only the exact supplied plain-data shape. Restoration validates players, hands, piles, colors, direction, dealer, and turn state; a single empty hand restores a completed Round without serializing transient UNO vulnerability.
+- `Game` coordinates Round instances and cumulative scores, subscribes to restored and newly created rounds, starts another round below the target, and exposes no current round once a winner reaches the target. Game mementos defensively preserve players, scores, configuration, and an optional current Round.
+- The later-round dealer policy remains unspecified by the supplied assertions; new rounds use the injected randomizer rather than adding an untested rotation rule.

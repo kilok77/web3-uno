@@ -29,7 +29,7 @@ export type RoundMemento = {
   readonly currentColor: Color
   readonly currentDirection: Direction
   readonly dealer: number
-  readonly playerInTurn: number
+  readonly playerInTurn?: number
 }
 
 export type RoundEndEvent = { readonly winner: number }
@@ -81,7 +81,9 @@ export class Round {
       this.#discardPile = createDeckFromMemento(restoredState.discardPile)
       this.#currentColor = restoredState.currentColor
       this.#currentDirection = restoredState.currentDirection
-      this.#playerInTurn = restoredState.playerInTurn
+      const winner = this.#hands.findIndex(hand => hand.size === 0)
+      this.#winnerIndex = winner === -1 ? undefined : winner
+      this.#playerInTurn = restoredState.playerInTurn ?? 0
       return
     }
 
@@ -287,6 +289,23 @@ export class Round {
     this.#endCallbacks.push(callback)
   }
 
+  toMemento(): RoundMemento {
+    const memento: RoundMemento = {
+      players: [...this.#players],
+      hands: this.#hands.map(hand => hand.toMemento()),
+      drawPile: this.#drawPile.toMemento(),
+      discardPile: this.#discardPile.toMemento(),
+      currentColor: this.#currentColor,
+      currentDirection: this.#currentDirection,
+      dealer: this.dealer,
+    }
+
+    if (!this.hasEnded()) {
+      return { ...memento, playerInTurn: this.#playerInTurn }
+    }
+    return memento
+  }
+
   private complete(winner: number): void {
     if (this.#winnerIndex !== undefined) return
 
@@ -397,9 +416,10 @@ export function createRound(config: RoundConfig): Round {
 }
 
 export function createRoundFromMemento(
-  memento: RoundMemento,
+  memento: unknown,
   shuffler: Shuffler<Card> = standardShuffler,
 ): Round {
+  assertRoundMemento(memento)
   return new Round(
     {
       players: memento.players,
@@ -415,6 +435,58 @@ export function createRoundFromMemento(
       playerInTurn: memento.playerInTurn,
     },
   )
+}
+
+function assertRoundMemento(value: unknown): asserts value is RoundMemento {
+  if (!isRecord(value) || !Array.isArray(value.players) || value.players.length < 2) {
+    throw new Error("A Round memento requires at least two players")
+  }
+  if (!value.players.every(player => typeof player === "string")) {
+    throw new Error("Round players must be strings")
+  }
+
+  const playerCount = value.players.length
+  if (!Array.isArray(value.hands) || value.hands.length !== playerCount) {
+    throw new Error("A Round memento requires one hand per player")
+  }
+  const hands = value.hands.map(hand => createDeckFromMemento(hand).toMemento())
+  const emptyHands = hands.filter(hand => hand.length === 0)
+  if (emptyHands.length > 1) {
+    throw new Error("At most one Round hand may be empty")
+  }
+
+  createDeckFromMemento(value.drawPile)
+  const discardPile = createDeckFromMemento(value.discardPile)
+  const topCard = discardPile.top()
+  if (topCard === undefined) {
+    throw new Error("A Round discard pile cannot be empty")
+  }
+  if (!colors.includes(value.currentColor as Color)) {
+    throw new Error("A Round memento requires a valid current color")
+  }
+  if ("color" in topCard && topCard.color !== value.currentColor) {
+    throw new Error("Current color must match a colored discard")
+  }
+  if (value.currentDirection !== "clockwise" && value.currentDirection !== "counterclockwise") {
+    throw new Error("A Round memento requires a valid direction")
+  }
+  if (!isPlayerIndex(value.dealer, playerCount)) {
+    throw new Error("Round dealer is out of bounds")
+  }
+  if (emptyHands.length === 0 && !isPlayerIndex(value.playerInTurn, playerCount)) {
+    throw new Error("An unfinished Round requires a player in turn")
+  }
+  if (value.playerInTurn !== undefined && !isPlayerIndex(value.playerInTurn, playerCount)) {
+    throw new Error("Round player in turn is out of bounds")
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function isPlayerIndex(value: unknown, playerCount: number): value is number {
+  return Number.isInteger(value) && (value as number) >= 0 && (value as number) < playerCount
 }
 
 type InitialDiscard = Exclude<Card, { readonly type: "WILD" | "WILD DRAW" }>
