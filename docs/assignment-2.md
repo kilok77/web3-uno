@@ -33,14 +33,27 @@ Build a browser-only Vue UNO experience around the Assignment 1 object-oriented 
 - Assignment 1 OO model copied into `assignments/assignment-2-vue-bots/src/domain/`; no cross-assignment runtime import is used.
 - One Web Worker per bot.
 - Workers receive serialized `RoundMemento` snapshots and return explicit play/draw decisions.
-- Legal-card selection is delegated back to the restored Assignment 1 Round model inside the worker.
+- Legal-card selection is delegated to the restored Assignment 1 Round model inside the worker.
 - Wild color choice uses the most common intrinsic color in the bot's hand.
 - UNO declaration and catching are probabilistic to satisfy the should-have behavior.
+- The UI includes setup, active-game, and game-over screens.
 
 ## Source
 
 Original specification: `reference/assignments/WEB3 Assignment 2.docx`.
 
+## Verification
+
+GitHub Actions verifies both the preserved Assignment 1 snapshot and this Assignment 2 snapshot.
+
+Assignment 2 checks:
+
+- `npm run typecheck` — passed
+- `npm test` — passed
+- `npm run build` — passed
+
+The toolchain intentionally pins TypeScript 5.9.3 because current `vue-tsc` 3.3.x does not yet support the TypeScript 7 compiler API.
+
 ## Status
 
-Implementation added on `chatgpt/assignment-2`; CI verification pending.
+Implementation complete and CI-verified on PR #1 (`chatgpt/assignment-2`).
