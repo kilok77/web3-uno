@@ -6,7 +6,9 @@ import {
 import type { Card } from "../../src/model/deck"
 import {
   createRound as createModelRound,
+  createRoundFromMemento as restoreRound,
   type Round,
+  type RoundMemento,
 } from "../../src/model/round"
 import {
   standardShuffler,
@@ -37,4 +39,11 @@ export function createRound({
   cardsPerPlayer = 7,
 }: HandConfig): Round {
   return createModelRound({ players, dealer, shuffler, cardsPerPlayer })
+}
+
+export function createRoundFromMemento(
+  memento: any,
+  shuffler: Shuffler<Card> = standardShuffler,
+): Round {
+  return restoreRound(memento as RoundMemento, shuffler)
 }

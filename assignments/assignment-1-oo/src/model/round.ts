@@ -1,5 +1,6 @@
 import {
   colors,
+  createDeckFromMemento,
   Deck,
   createInitialDeck,
   type Card,
@@ -20,6 +21,22 @@ export type RoundConfig = {
   readonly cardsPerPlayer?: number
 }
 
+export type RoundMemento = {
+  readonly players: readonly string[]
+  readonly hands: readonly (readonly Card[])[]
+  readonly drawPile: readonly Card[]
+  readonly discardPile: readonly Card[]
+  readonly currentColor: Color
+  readonly currentDirection: Direction
+  readonly dealer: number
+  readonly playerInTurn: number
+}
+
+type RestoredRoundState = Omit<
+  RoundMemento,
+  "players" | "dealer"
+>
+
 /** State and legality queries for one UNO round. */
 export class Round {
   readonly #players: string[]
@@ -31,6 +48,8 @@ export class Round {
   #playerInTurn: number
   #playableDrawnCardIndex: number | undefined
   readonly #shuffler: Shuffler<Card>
+  readonly #unoVulnerablePlayers: Set<number>
+  #declaredUnoPlayer: number | undefined
 
   readonly dealer: number
 
@@ -39,14 +58,29 @@ export class Round {
     dealer,
     shuffler = standardShuffler,
     cardsPerPlayer = 7,
-  }: RoundConfig) {
-    assertPlayerCount(players.length)
-    assertStartingHandSize(cardsPerPlayer, players.length)
-    assertDealer(dealer)
-
+  }: RoundConfig, restoredState?: RestoredRoundState) {
     this.#players = [...players]
     this.dealer = dealer
     this.#shuffler = shuffler
+    this.#playableDrawnCardIndex = undefined
+    this.#unoVulnerablePlayers = new Set()
+    this.#declaredUnoPlayer = undefined
+
+    if (restoredState !== undefined) {
+      this.#hands = restoredState.hands.map(cards =>
+        new Hand(createDeckFromMemento(cards).toMemento()),
+      )
+      this.#drawPile = createDeckFromMemento(restoredState.drawPile)
+      this.#discardPile = createDeckFromMemento(restoredState.discardPile)
+      this.#currentColor = restoredState.currentColor
+      this.#currentDirection = restoredState.currentDirection
+      this.#playerInTurn = restoredState.playerInTurn
+      return
+    }
+
+    assertPlayerCount(players.length)
+    assertStartingHandSize(cardsPerPlayer, players.length)
+    assertDealer(dealer)
 
     let deck = createInitialDeck()
     deck.shuffle(shuffler)
@@ -66,7 +100,6 @@ export class Round {
     )
     this.#currentDirection = initialState.direction
     this.#playerInTurn = initialState.playerInTurn
-    this.#playableDrawnCardIndex = undefined
   }
 
   get playerCount(): number {
@@ -126,7 +159,8 @@ export class Round {
   }
 
   play(cardIndex: number, selectedColor?: Color): Card {
-    const hand = this.#hands[this.#playerInTurn]
+    const actor = this.#playerInTurn
+    const hand = this.#hands[actor]
     const card = hand.at(cardIndex)
     if (card === undefined || !this.canPlay(cardIndex)) {
       throw new Error("The selected card cannot be played")
@@ -152,6 +186,7 @@ export class Round {
     const nextColor = card.type === "WILD" || card.type === "WILD DRAW"
       ? selectedColor as Color
       : card.color
+    const declaredUno = this.beginAction(actor)
 
     const played = hand.remove(cardIndex)
     if (played === undefined) throw new Error("Card index is out of bounds")
@@ -160,6 +195,9 @@ export class Round {
     this.#currentColor = nextColor
     this.#playableDrawnCardIndex = undefined
     this.applyPlayedCardEffect(played)
+    if (hand.size === 1 && !declaredUno) {
+      this.#unoVulnerablePlayers.add(actor)
+    }
     return played
   }
 
@@ -168,8 +206,10 @@ export class Round {
       throw new Error("The playable drawn card must be played or declined")
     }
 
-    const hand = this.#hands[this.#playerInTurn]
+    const actor = this.#playerInTurn
+    const hand = this.#hands[actor]
     const drawnCard = this.takeDrawCard()
+    this.beginAction(actor)
 
     hand.add(drawnCard)
     const drawnCardIndex = hand.size - 1
@@ -183,6 +223,37 @@ export class Round {
     }
 
     this.advanceTurn()
+  }
+
+  sayUno(playerIndex: number): void {
+    assertPlayerIndex(playerIndex, this.playerCount)
+
+    if (this.#unoVulnerablePlayers.delete(playerIndex)) return
+
+    if (
+      playerIndex === this.#playerInTurn
+      && this.#hands[playerIndex].size === 2
+    ) {
+      this.#declaredUnoPlayer = playerIndex
+    }
+  }
+
+  catchUnoFailure({
+    accused,
+  }: { readonly accuser: number; readonly accused: number }): boolean {
+    assertPlayerIndex(accused, this.playerCount)
+    if (!this.#unoVulnerablePlayers.has(accused)) return false
+
+    this.drawCards(this.#hands[accused], 4)
+    this.#unoVulnerablePlayers.delete(accused)
+    return true
+  }
+
+  private beginAction(actor: number): boolean {
+    const declaredUno = this.#declaredUnoPlayer === actor
+    this.#declaredUnoPlayer = undefined
+    this.#unoVulnerablePlayers.clear()
+    return declaredUno
   }
 
   private applyPlayedCardEffect(card: Card): void {
@@ -271,6 +342,27 @@ export class Round {
 
 export function createRound(config: RoundConfig): Round {
   return new Round(config)
+}
+
+export function createRoundFromMemento(
+  memento: RoundMemento,
+  shuffler: Shuffler<Card> = standardShuffler,
+): Round {
+  return new Round(
+    {
+      players: memento.players,
+      dealer: memento.dealer,
+      shuffler,
+    },
+    {
+      hands: memento.hands,
+      drawPile: memento.drawPile,
+      discardPile: memento.discardPile,
+      currentColor: memento.currentColor,
+      currentDirection: memento.currentDirection,
+      playerInTurn: memento.playerInTurn,
+    },
+  )
 }
 
 type InitialDiscard = Exclude<Card, { readonly type: "WILD" | "WILD DRAW" }>

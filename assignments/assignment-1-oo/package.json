@@ -13,6 +13,7 @@
     "test:supplied:recycling": "jest --runInBand --runTestsByPath __test__/model/round.recycling.test.ts",
     "test:supplied:round-start": "jest --runInBand --runTestsByPath __test__/model/round.start.test.ts",
     "test:supplied:skip-reverse": "jest --runInBand --runTestsByPath __test__/model/round.skip-reverse.test.ts",
+    "test:supplied:uno": "jest --runInBand --runTestsByPath __test__/model/round.uno.test.ts",
     "test:supplied:wild": "jest --runInBand --runTestsByPath __test__/model/round.wild.test.ts",
     "typecheck": "tsc --noEmit",
     "typecheck:supplied-card-contract": "tsc -p tsconfig.supplied-card.json"
