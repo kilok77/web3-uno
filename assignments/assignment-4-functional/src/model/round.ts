@@ -279,7 +279,8 @@ function drawCardsToPlayer(round: Round, playerIndex: number, count: number): Ro
   let discardPile: Deck = round.discardPile
   let hand: ReadonlyArray<Card> = round.hands[playerIndex]
 
-  for (const _ of _.range(count)) {
+  for (const drawIndex of _.range(count)) {
+    void drawIndex
     const taken = takeDrawCard(drawPile, discardPile, round._shuffler)
     hand = [...hand, copyCard(taken.card)]
     drawPile = taken.drawPile
