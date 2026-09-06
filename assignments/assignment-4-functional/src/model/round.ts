@@ -39,7 +39,10 @@ export type RoundMemento = {
 }
 
 type Accusation = { readonly accuser: number; readonly accused: number }
-
+type InitialDiscard = Card & {
+  readonly type: 'NUMBERED' | 'SKIP' | 'REVERSE' | 'DRAW'
+  readonly color: Color
+}
 type DrawState = {
   readonly card: Card
   readonly drawPile: Deck
@@ -56,7 +59,7 @@ export function createRound(
   assertStartingHandSize(cardsPerPlayer, players.length)
   assertDealer(dealer)
 
-  let shuffled = shuffler(createInitialDeck())
+  const shuffled: Deck = shuffler(createInitialDeck())
   const hands = _.range(players.length).map(player =>
     shuffled.slice(player * cardsPerPlayer, (player + 1) * cardsPerPlayer),
   )
@@ -183,7 +186,7 @@ export function play(cardIndex: number, selectedColor: Color | undefined, round:
     ...roundData(round),
     hands: replaceAt(round.hands, actor, nextHand),
     discardPile: [copyCard(card), ...round.discardPile.map(copyCard)],
-    currentColor: wild ? selectedColor as Color : card.color,
+    currentColor: wild ? selectedColor as Color : requireColor(card),
     playableDrawnCardIndex: undefined,
     declaredUnoPlayer: undefined,
     unoVulnerablePlayers: [],
@@ -209,7 +212,7 @@ export function draw(round: Round): Round {
   const actor = round.playerInTurn as number
   const taken = takeDrawCard(round.drawPile, round.discardPile, round._shuffler)
   const newHand = [...round.hands[actor], copyCard(taken.card)]
-  let next = makeRound({
+  const next = makeRound({
     ...roundData(round),
     hands: replaceAt(round.hands, actor, newHand),
     drawPile: taken.drawPile,
@@ -302,9 +305,9 @@ function applyDrawPenalty(round: Round, count: number): Round {
 }
 
 function drawCardsToPlayer(round: Round, playerIndex: number, count: number): Round {
-  let drawPile = round.drawPile
-  let discardPile = round.discardPile
-  let hand = [...round.hands[playerIndex]]
+  let drawPile: Deck = round.drawPile
+  let discardPile: Deck = round.discardPile
+  let hand: ReadonlyArray<Card> = [...round.hands[playerIndex]]
 
   for (const _index of _.range(count)) {
     const taken = takeDrawCard(drawPile, discardPile, round._shuffler)
@@ -322,8 +325,8 @@ function drawCardsToPlayer(round: Round, playerIndex: number, count: number): Ro
 }
 
 function takeDrawCard(drawPile: Deck, discardPile: Deck, shuffler: Shuffler<Card>): DrawState {
-  let available = drawPile.map(copyCard)
-  let discard = discardPile.map(copyCard)
+  let available: Deck = drawPile.map(copyCard)
+  let discard: Deck = discardPile.map(copyCard)
   if (available.length === 0) {
     const recycled = recycleDiscardPile(available, discard, shuffler)
     available = recycled.drawPile
@@ -355,15 +358,16 @@ function recycleDiscardPile(drawPile: Deck, discardPile: Deck, shuffler: Shuffle
 }
 
 function takeInitialDiscard(drawPile: Deck, shuffler: Shuffler<Card>): {
-  readonly card: Exclude<Card, { readonly type: 'WILD' | 'WILD DRAW' }>
+  readonly card: InitialDiscard
   readonly drawPile: Deck
 } {
-  let available = drawPile.map(copyCard)
+  let available: Deck = drawPile.map(copyCard)
   while (true) {
     const [candidate, ...remaining] = available
     if (candidate === undefined) throw new Error('The deck does not contain an initial discard')
     if (candidate.type !== 'WILD' && candidate.type !== 'WILD DRAW') {
-      return { card: candidate, drawPile: remaining }
+      if (candidate.color === undefined) throw new Error('A colored discard requires a color')
+      return { card: candidate as InitialDiscard, drawPile: remaining }
     }
     available = shuffler([...remaining, candidate]).map(copyCard)
   }
@@ -400,20 +404,20 @@ function nextPlayer(round: Round): number {
 function isPlayable(card: Card, top: Card, currentColor: Color, hand: ReadonlyArray<Card>): boolean {
   if (card.type === 'WILD') return true
   if (card.type === 'WILD DRAW') {
-    return !hand.some(held => 'color' in held && held.color === currentColor)
+    return !hand.some(held => held.color === currentColor)
   }
   if (card.color === currentColor) return true
   if (card.type === 'NUMBERED' && top.type === 'NUMBERED') return card.number === top.number
   return isActionCard(card) && isActionCard(top) && card.type === top.type
 }
 
-function isActionCard(card: Card): card is Extract<Card, { readonly type: 'SKIP' | 'REVERSE' | 'DRAW' }> {
+function isActionCard(card: Card): boolean {
   return card.type === 'SKIP' || card.type === 'REVERSE' || card.type === 'DRAW'
 }
 
 function scoreCard(card: Card): number {
   switch (card.type) {
-    case 'NUMBERED': return card.number
+    case 'NUMBERED': return card.number ?? 0
     case 'SKIP':
     case 'REVERSE':
     case 'DRAW': return 20
@@ -483,6 +487,11 @@ function isCardIndex(index: number, handSize: number): boolean {
   return Number.isInteger(index) && index >= 0 && index < handSize
 }
 
+function requireColor(card: Card): Color {
+  if (card.color === undefined) throw new Error('Colored cards require a color')
+  return card.color
+}
+
 function assertInProgress(round: Round): void {
   if (hasEnded(round) || round.playerInTurn === undefined) throw new Error('The Round has ended')
 }
@@ -506,12 +515,9 @@ function assertDealer(dealer: number): void {
 }
 
 function copyCard(card: Card): Card {
-  switch (card.type) {
-    case 'NUMBERED': return { type: 'NUMBERED', color: card.color, number: card.number }
-    case 'SKIP':
-    case 'REVERSE':
-    case 'DRAW': return { type: card.type, color: card.color }
-    case 'WILD': return { type: 'WILD' }
-    case 'WILD DRAW': return { type: 'WILD DRAW' }
+  if (card.type === 'NUMBERED') return { type: card.type, color: card.color, number: card.number }
+  if (card.type === 'SKIP' || card.type === 'REVERSE' || card.type === 'DRAW') {
+    return { type: card.type, color: card.color }
   }
+  return { type: card.type }
 }
