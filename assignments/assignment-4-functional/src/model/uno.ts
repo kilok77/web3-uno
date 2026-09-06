@@ -26,6 +26,7 @@ export type Game = {
   readonly _randomizer: Randomizer
   readonly _shuffler: Shuffler<Card>
   readonly _cardsPerPlayer: number
+  readonly _seatOffset: number
 }
 
 export function createGame(props: Partial<Props> = {}): Game {
@@ -39,21 +40,22 @@ export function createGame(props: Partial<Props> = {}): Game {
   if (targetScore <= 0) throw new Error('Game target score must be positive')
   if (!Number.isInteger(cardsPerPlayer) || cardsPerPlayer < 0) throw new Error('Invalid starting hand size')
 
+  const seatOffset = 0
   return makeGame({
     players,
     targetScore,
     scores: players.map(() => 0),
-    currentRound: startRound(players, randomizer, shuffler, cardsPerPlayer),
+    currentRound: startRound(players, seatOffset, randomizer, shuffler, cardsPerPlayer),
     randomizer,
     shuffler,
     cardsPerPlayer,
+    seatOffset,
   })
 }
 
 /**
- * Applies one pure Round transformation to the current round. If the round
- * ends, its score is folded into the immutable game state and a new round is
- * started unless the target score has been reached.
+ * Applies a pure Round transformation. Completed-round scores are translated
+ * from the rotated Round seating back to the stable Game player order.
  */
 export function play(action: (round: Round.Round) => Round.Round, game: Game): Game {
   if (game.winner !== undefined || game.currentRound === undefined) {
@@ -70,6 +72,7 @@ export function play(action: (round: Round.Round) => Round.Round, game: Game): G
       randomizer: game._randomizer,
       shuffler: game._shuffler,
       cardsPerPlayer: game._cardsPerPlayer,
+      seatOffset: game._seatOffset,
     })
   }
 
@@ -79,38 +82,67 @@ export function play(action: (round: Round.Round) => Round.Round, game: Game): G
     throw new Error('Ended Round must have a winner and score')
   }
 
-  const scores = game.scores.map((value, index) => index === roundWinner ? value + roundScore : value)
-  if (scores[roundWinner] >= game.targetScore) {
+  const gameWinnerIndex = normalize(roundWinner + game._seatOffset, game.playerCount)
+  const scores = game.scores.map((value, index) =>
+    index === gameWinnerIndex ? value + roundScore : value,
+  )
+
+  if (scores[gameWinnerIndex] >= game.targetScore) {
     return makeGame({
       players: game.players,
       targetScore: game.targetScore,
       scores,
-      winner: roundWinner,
+      winner: gameWinnerIndex,
       currentRound: undefined,
       randomizer: game._randomizer,
       shuffler: game._shuffler,
       cardsPerPlayer: game._cardsPerPlayer,
+      seatOffset: game._seatOffset,
     })
   }
 
+  const seatOffset = normalize(game._seatOffset + 1, game.playerCount)
   return makeGame({
     players: game.players,
     targetScore: game.targetScore,
     scores,
-    currentRound: startRound(game.players, game._randomizer, game._shuffler, game._cardsPerPlayer),
+    currentRound: startRound(
+      game.players,
+      seatOffset,
+      game._randomizer,
+      game._shuffler,
+      game._cardsPerPlayer,
+    ),
     randomizer: game._randomizer,
     shuffler: game._shuffler,
     cardsPerPlayer: game._cardsPerPlayer,
+    seatOffset,
   })
 }
 
 function startRound(
   players: ReadonlyArray<string>,
+  seatOffset: number,
   randomizer: Randomizer,
   shuffler: Shuffler<Card>,
   cardsPerPlayer: number,
 ): Round.Round {
-  return Round.createRound(players, randomizer(players.length), shuffler, cardsPerPlayer)
+  const seatedPlayers = rotateLeft(players, seatOffset)
+  return Round.createRound(
+    seatedPlayers,
+    randomizer(seatedPlayers.length),
+    shuffler,
+    cardsPerPlayer,
+  )
+}
+
+function rotateLeft<T>(items: ReadonlyArray<T>, offset: number): T[] {
+  const normalized = normalize(offset, items.length)
+  return _.concat(_.drop(items, normalized), _.take(items, normalized))
+}
+
+function normalize(index: number, count: number): number {
+  return ((index % count) + count) % count
 }
 
 function makeGame(input: {
@@ -122,6 +154,7 @@ function makeGame(input: {
   readonly randomizer: Randomizer
   readonly shuffler: Shuffler<Card>
   readonly cardsPerPlayer: number
+  readonly seatOffset: number
 }): Game {
   return {
     players: [...input.players],
@@ -133,9 +166,8 @@ function makeGame(input: {
     _randomizer: input.randomizer,
     _shuffler: input.shuffler,
     _cardsPerPlayer: input.cardsPerPlayer,
+    _seatOffset: input.seatOffset,
   }
 }
 
-// Keep lodash part of the functional implementation surface as required by
-// the assignment; this also makes the intent explicit for future A5 reuse.
 export const totalScore = (game: Game): number => _.sum(game.scores)
