@@ -1,0 +1,41 @@
+name: A4 inspect
+
+on:
+  push:
+    branches:
+      - chatgpt/assignment-4
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print Assignment 4 specification
+        run: |
+          python - <<'PY'
+          import zipfile, xml.etree.ElementTree as ET
+          path = 'reference/assignments/WEB3 Assignment 4.docx'
+          with zipfile.ZipFile(path) as z:
+              root = ET.fromstring(z.read('word/document.xml'))
+          ns = {'w':'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+          for p in root.findall('.//w:p', ns):
+              text = ''.join(t.text or '' for t in p.findall('.//w:t', ns)).strip()
+              if text:
+                  print(text)
+          PY
+      - name: Print functional test suite
+        run: |
+          rm -rf /tmp/functional-test
+          mkdir -p /tmp/functional-test
+          unzip -q 'reference/tests/functional-test.zip' -d /tmp/functional-test
+          find /tmp/functional-test -type f | sort
+          echo '===== FILE CONTENTS ====='
+          while IFS= read -r f; do
+            case "$f" in
+              *.ts|*.js|*.json|*.md|*.txt)
+                echo
+                echo "===== $f ====="
+                cat "$f"
+                ;;
+            esac
+          done < <(find /tmp/functional-test -type f | sort)
