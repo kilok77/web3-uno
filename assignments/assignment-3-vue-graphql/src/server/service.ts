@@ -23,14 +23,23 @@ type ServiceOptions = {
 export class GameService {
   readonly #sessions = new Map<string, string>()
   readonly #events = new EventBus<string, number>()
+  readonly #state: PersistedState
+  readonly #persistence: Persistence
+  readonly #randomizer: Randomizer
+  readonly #shuffler: Shuffler<Card>
   #version = 0
 
   private constructor(
-    readonly #state: PersistedState,
-    readonly #persistence: Persistence,
-    readonly #randomizer: Randomizer,
-    readonly #shuffler: Shuffler<Card>,
-  ) {}
+    state: PersistedState,
+    persistence: Persistence,
+    randomizer: Randomizer,
+    shuffler: Shuffler<Card>,
+  ) {
+    this.#state = state
+    this.#persistence = persistence
+    this.#randomizer = randomizer
+    this.#shuffler = shuffler
+  }
 
   static async create({
     persistence = new MemoryPersistence(),
@@ -156,7 +165,7 @@ export class GameService {
     selectedColor?: Color,
   ): Promise<GameView> {
     const actor = this.requirePlayer(token)
-    const { game, round, actorIndex } = this.roundForActor(gameId, actor.id, true)
+    const { game, round } = this.roundForActor(gameId, actor.id, true)
     if (!Number.isInteger(cardIndex)) throw new Error("Card index must be an integer")
     if (selectedColor !== undefined && !colors.includes(selectedColor)) throw new Error("Invalid color")
     round.play(cardIndex, selectedColor)
@@ -257,6 +266,7 @@ export class GameService {
 
     const round = createRoundFromMemento(game.round, this.#shuffler)
     const playerInTurn = round.playerInTurn()
+    const discardTop = round.discardPile().top()
     return {
       ...base,
       players: game.playerIds.map((id, index) => {
@@ -267,7 +277,7 @@ export class GameService {
       }),
       currentColor: round.currentColor(),
       currentDirection: round.currentDirection(),
-      discardTop: round.discardPile().top() === undefined ? undefined : copyCard(round.discardPile().top() as Card),
+      discardTop: discardTop === undefined ? undefined : copyCard(discardTop),
       playerInTurnId: playerInTurn === undefined ? undefined : game.playerIds[playerInTurn],
     }
   }
