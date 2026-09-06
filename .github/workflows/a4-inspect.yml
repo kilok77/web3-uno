@@ -5,37 +5,30 @@ on:
     branches:
       - chatgpt/assignment-4
 
+permissions:
+  contents: write
+
 jobs:
   inspect:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Print Assignment 4 specification
-        run: |
-          python - <<'PY'
-          import zipfile, xml.etree.ElementTree as ET
-          path = 'reference/assignments/WEB3 Assignment 4.docx'
-          with zipfile.ZipFile(path) as z:
-              root = ET.fromstring(z.read('word/document.xml'))
-          ns = {'w':'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
-          for p in root.findall('.//w:p', ns):
-              text = ''.join(t.text or '' for t in p.findall('.//w:t', ns)).strip()
-              if text:
-                  print(text)
-          PY
-      - name: Print functional test suite
+        with:
+          ref: chatgpt/assignment-4
+      - name: Stage supplied functional tests
         run: |
           rm -rf /tmp/functional-test
           mkdir -p /tmp/functional-test
           unzip -q 'reference/tests/functional-test.zip' -d /tmp/functional-test
-          find /tmp/functional-test -type f | sort
-          echo '===== FILE CONTENTS ====='
-          while IFS= read -r f; do
-            case "$f" in
-              *.ts|*.js|*.json|*.md|*.txt)
-                echo
-                echo "===== $f ====="
-                cat "$f"
-                ;;
-            esac
-          done < <(find /tmp/functional-test -type f | sort)
+          mkdir -p assignments/assignment-4-functional
+          cp -R /tmp/functional-test/. assignments/assignment-4-functional/
+      - name: Commit supplied tests
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add assignments/assignment-4-functional
+          if ! git diff --cached --quiet; then
+            git commit -m 'test: add supplied assignment 4 functional suite'
+            git push origin HEAD:chatgpt/assignment-4
+          fi
