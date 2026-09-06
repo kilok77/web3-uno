@@ -15,12 +15,13 @@ const service = await GameService.create({ persistence: new JsonFilePersistence(
 const schema = createSchema()
 
 const wsServer = new WebSocketServer({ port: wsPort, path: "/graphql" })
-useServer<GraphQLContext>({
+useServer({
   schema,
-  context: async context => ({
-    service,
-    token: bearerToken((context.connectionParams?.authorization as string | undefined) ?? undefined),
-  }),
+  context: async context => {
+    const params = context.connectionParams as Record<string, unknown> | undefined
+    const authorization = typeof params?.authorization === "string" ? params.authorization : undefined
+    return { service, token: bearerToken(authorization) } satisfies GraphQLContext
+  },
 }, wsServer)
 
 const server = new ApolloServer<GraphQLContext>({ schema })
