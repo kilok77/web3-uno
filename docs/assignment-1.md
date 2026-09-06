@@ -65,7 +65,10 @@ The reference extraction must remain pristine. When implementation begins, estab
 - A1.2 complete
 - A1.3 complete
 - A1.4 complete
-- A1.5 Round initialization not started
+- A1.5 complete
+- A1.6 complete
+- A1.7 complete
+- A1.8 Skip and Reverse effects not started
 
 ## Notes
 
@@ -76,3 +79,6 @@ The reference extraction must remain pristine. When implementation begins, estab
 - Cards are readonly structural values modeled as a precise discriminated union in `src/model/deck.ts`. `Color` comes from a readonly `colors` tuple, numbered values are restricted to 0–9, `TypedCard<T>` is derived with `Extract`, and `hasColor`/`hasNumber` are narrowing type guards.
 - `Deck` is a mutable object-oriented pile with index 0 as its top. `deal` and injected `shuffle` mutate it; `filter` returns an independent Deck; mementos are ordered plain card arrays validated during restoration.
 - `Hand` owns an ordered card array, exposes a stable live readonly view, appends and removes cards without applying gameplay rules, and serializes to a defensive card-array copy for later Round mementos.
+- `Round` initialization validates 2–10 players, shuffles once before contiguous dealing, retries wild initial discards within the remaining pile, and applies the tested initial Numbered, Skip, Reverse, and Draw Two state transitions.
+- Round legality is centralized in a non-mutating predicate: color, number, and action-type matches are supported; ordinary Wild is always legal; Wild Draw Four checks only for another card matching the current color.
+- Ordinary Round turns remove and prepend played numbered cards, update color, and advance in the current direction. Drawn cards append to the hand; an unplayable draw advances immediately, while a playable draw retains the turn with only that new card eligible.

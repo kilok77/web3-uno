@@ -3,6 +3,15 @@ import {
   createDeckFromMemento as restoreDeck,
   createInitialDeck as createDeck,
 } from "../../src/model/deck"
+import type { Card } from "../../src/model/deck"
+import {
+  createRound as createModelRound,
+  type Round,
+} from "../../src/model/round"
+import {
+  standardShuffler,
+  type Shuffler,
+} from "../../src/utils/random_utils"
 
 export function createInitialDeck(): Deck {
   return createDeck()
@@ -12,4 +21,20 @@ export function createDeckFromMemento(
   cards: Record<string, string | number>[],
 ): Deck {
   return restoreDeck(cards)
+}
+
+export type HandConfig = {
+  players: string[]
+  dealer: number
+  shuffler?: Shuffler<Card>
+  cardsPerPlayer?: number
+}
+
+export function createRound({
+  players,
+  dealer,
+  shuffler = standardShuffler,
+  cardsPerPlayer = 7,
+}: HandConfig): Round {
+  return createModelRound({ players, dealer, shuffler, cardsPerPlayer })
 }

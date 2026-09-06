@@ -35,3 +35,7 @@ export function is(spec: CardSpec): CardPredicate {
     }
   }
 }
+
+export function not(predicate: CardPredicate): CardPredicate {
+  return card => !predicate(card)
+}
