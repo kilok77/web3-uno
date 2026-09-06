@@ -70,7 +70,8 @@ The reference extraction must remain pristine. When implementation begins, estab
 - A1.7 complete
 - A1.8 complete
 - A1.9 complete
-- A1.10 Wild and Wild Draw Four gameplay not started
+- A1.10 complete
+- A1.11 Draw-pile recycling not started
 
 ## Notes
 
@@ -87,3 +88,4 @@ The reference extraction must remain pristine. When implementation begins, estab
 - Skip and Reverse reuse the shared play transition. Skip advances two positions; Reverse flips direction before advancing, and both return play to the actor in a two-player round.
 
 - Draw Two uses the same forced-card transfer helper as startup penalties, then advances two positions in the current direction. Forced cards never enter the voluntary playable-draw phase.
+- Wild keeps its chosen color in Round state and advances normally. Wild Draw Four reuses the forced-penalty path with four cards and a two-position advance; neither wild card gains a serialized color field.

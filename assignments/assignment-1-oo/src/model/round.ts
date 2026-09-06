@@ -143,10 +143,11 @@ export class Round {
       && card.type !== "REVERSE"
       && card.type !== "DRAW"
       && card.type !== "WILD"
+      && card.type !== "WILD DRAW"
     ) {
       throw new Error("This card's play effect is not implemented yet")
     }
-    const nextColor = card.type === "WILD"
+    const nextColor = card.type === "WILD" || card.type === "WILD DRAW"
       ? selectedColor as Color
       : card.color
 
@@ -199,20 +200,26 @@ export class Round {
         return
 
       case "DRAW": {
-        const penalizedPlayer = this.nextPlayer()
-        drawCards(this.#hands[penalizedPlayer], this.#drawPile, 2)
-        this.advanceTurn(2)
+        this.applyDrawPenalty(2)
         return
       }
+
+      case "WILD DRAW":
+        this.applyDrawPenalty(4)
+        return
 
       case "NUMBERED":
       case "WILD":
         this.advanceTurn()
         return
 
-      case "WILD DRAW":
-        throw new Error("This card's play effect is not implemented yet")
     }
+  }
+
+  private applyDrawPenalty(cardCount: number): void {
+    const penalizedPlayer = this.nextPlayer()
+    drawCards(this.#hands[penalizedPlayer], this.#drawPile, cardCount)
+    this.advanceTurn(2)
   }
 
   private nextPlayer(): number {
