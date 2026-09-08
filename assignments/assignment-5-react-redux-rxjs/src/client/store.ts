@@ -28,7 +28,7 @@ import type { AuthPayload, Color, GameSummary, GameView, PublicPlayer } from "./
 
 type AppState = {
   player?: PublicPlayer
-  games: readonly GameSummary[]
+  games: GameSummary[]
   currentGame?: GameView
   busy: boolean
   error?: string
@@ -75,7 +75,7 @@ export const loginUser = createAsyncThunk<AuthPayload, { username: string; passw
   },
 )
 
-export const loadGames = createAsyncThunk<readonly GameSummary[]>("app/games", async () => {
+export const loadGames = createAsyncThunk<GameSummary[]>("app/games", async () => {
   const result = await apolloClient.query<{ games: GameSummary[] }>({ query: GAMES, fetchPolicy: "network-only" })
   return required(result.data?.games, "games")
 })
