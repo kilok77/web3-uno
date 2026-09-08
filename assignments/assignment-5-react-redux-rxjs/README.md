@@ -34,4 +34,11 @@ npm test
 npm run build
 ```
 
-Assignment 4's original 185 functional tests remain a separate CI regression gate, while A5 tests cover the authoritative functional multiplayer service, Redux state transitions, and RxJS update stabilization.
+Verified CI result:
+
+- typecheck: passed
+- A5 tests: **9/9** across **3/3** Vitest files
+- React/Vite production build: passed
+- Node server production build: passed
+
+Assignment 4's original **185/185** functional tests remain a separate CI regression gate, and A1–A4 are also checked whenever A5 changes.
