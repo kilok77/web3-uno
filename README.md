@@ -27,8 +27,8 @@ A1 OO model ─────┤                                                  
 | 1 | OO UNO model | Complete — full supplied suite green |
 | 2 | Vue + Web Workers | Complete — typecheck, tests, and production build green |
 | 3 | GraphQL multiplayer | Complete — authoritative multiplayer, persistence, subscriptions, tests, and build green |
-| 4 | Functional UNO | Not started |
+| 4 | Functional UNO | Complete — typecheck and full supplied functional suite (185/185) green |
 | 5 | React + Redux + RxJS | Not started |
 | 6 | Next.js SSR | Not started |
 
-Current implementation target: Assignment 4, the immutable functional rewrite of the UNO domain model.
+Current implementation target: Assignment 5, integrating the A3 multiplayer architecture with the A4 functional model in React, Redux, and RxJS.
