@@ -28,7 +28,7 @@ A1 OO model ─────┤                                                  
 | 2 | Vue + Web Workers | Complete — typecheck, tests, and production build green |
 | 3 | GraphQL multiplayer | Complete — authoritative multiplayer, persistence, subscriptions, tests, and build green |
 | 4 | Functional UNO | Complete — typecheck and full supplied functional suite (185/185) green |
-| 5 | React + Redux + RxJS | Not started |
+| 5 | React + Redux + RxJS | Complete — typecheck, 9/9 A5 tests, client/server production builds green |
 | 6 | Next.js SSR | Not started |
 
-Current implementation target: Assignment 5, integrating the A3 multiplayer architecture with the A4 functional model in React, Redux, and RxJS.
+Current implementation target: Assignment 6, converting the verified React/Redux/RxJS application to Next.js SSR while preserving the authoritative GraphQL multiplayer boundary and functional UNO domain.
