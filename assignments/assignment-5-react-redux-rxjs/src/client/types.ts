@@ -1,53 +1,57 @@
 export type Color = "BLUE" | "GREEN" | "RED" | "YELLOW"
 export type GameStatus = "WAITING" | "PLAYING" | "FINISHED"
 
+/**
+ * Transport/UI types are intentionally mutable because Redux Toolkit stores
+ * them in Immer drafts. Domain immutability lives separately in src/domain.
+ */
 export type ClientCard = {
-  readonly type: string
-  readonly color?: Color
-  readonly number?: number
+  type: string
+  color?: Color
+  number?: number
 }
 
 export type PublicPlayer = {
-  readonly id: string
-  readonly username: string
-  readonly score: number
+  id: string
+  username: string
+  score: number
 }
 
 export type AuthPayload = {
-  readonly token: string
-  readonly player: PublicPlayer
+  token: string
+  player: PublicPlayer
 }
 
 export type GameSummary = {
-  readonly id: string
-  readonly name: string
-  readonly status: GameStatus
-  readonly hostId: string
-  readonly hostUsername: string
-  readonly maxPlayers: number
-  readonly playerCount: number
-  readonly joined: boolean
+  id: string
+  name: string
+  status: GameStatus
+  hostId: string
+  hostUsername: string
+  maxPlayers: number
+  playerCount: number
+  joined: boolean
 }
 
 export type PlayerGameView = {
-  readonly id: string
-  readonly username: string
-  readonly cardCount: number
-  readonly cards?: readonly ClientCard[]
+  id: string
+  username: string
+  cardCount: number
+  cards?: ClientCard[]
 }
 
 export type GameView = {
-  readonly id: string
-  readonly name: string
-  readonly status: GameStatus
-  readonly hostId: string
-  readonly maxPlayers: number
-  readonly viewerId: string
-  readonly players: readonly PlayerGameView[]
-  readonly currentColor?: Color
-  readonly currentDirection?: string
-  readonly discardTop?: ClientCard
-  readonly playerInTurnId?: string
-  readonly winnerId?: string
-  readonly score?: number
+  id: string
+  name: string
+  status: GameStatus
+  hostId: string
+  maxPlayers: number
+  viewerId: string
+  players: PlayerGameView[]
+  currentColor?: Color
+  currentDirection?: string
+  discardTop?: ClientCard
+  playerInTurnId?: string
+  winnerId?: string
+  score?: number
 }
