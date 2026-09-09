@@ -9,6 +9,8 @@ Self-contained WEB3 Assignment 6 snapshot converted from the verified Assignment
 - The interactive UNO application is a **Client Component** boundary. Redux Toolkit, Apollo Client and RxJS never leak into Server Components.
 - The copied functional domain and authoritative GraphQL server remain the only owners of UNO rules.
 
+The production build verifies this directly: `/` and `/rules` are emitted as static routes, while `/play` is emitted as a dynamic server-rendered route.
+
 ## Run
 
 Use Node 22:
@@ -29,7 +31,7 @@ npm run build
 npm start
 ```
 
-`npm start` launches the built Next.js server and the built GraphQL server together.
+`npm start` launches the built Next.js server and the built GraphQL server together. CI smoke-tests both production endpoints after every A6 change.
 
 ## Verify
 
@@ -39,4 +41,4 @@ npm test
 npm run build
 ```
 
-A6 preserves the A5 authentication, lobby, multiplayer commands, viewer-safe projections, persistence, Redux state and RxJS live update flow while adding deliberate static/dynamic and server/client rendering boundaries.
+Current A6 suite: **11/11 tests** across the retained authoritative multiplayer service, Redux state, RxJS stream behavior, and Next server-side session bootstrap.

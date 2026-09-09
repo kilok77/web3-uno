@@ -98,3 +98,17 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Smoke test production start
+        run: |
+          npm start > /tmp/a6-start.log 2>&1 &
+          APP_PID=$!
+          trap 'kill $APP_PID 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:3000/ >/dev/null && \
+               curl -fsS -H 'content-type: application/json' -d '{"query":"{ __typename }"}' http://127.0.0.1:4000/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/a6-start.log
+          exit 1
