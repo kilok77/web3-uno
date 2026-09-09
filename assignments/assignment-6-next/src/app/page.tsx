@@ -1,0 +1,5 @@
+import Link from "next/link"
+
+export default function HomePage() {
+  return <main className="marketing"><p className="eyebrow">WEB3 · Assignment 6</p><h1>UNO, rendered with Next.js</h1><p className="lead">The public shell is a static Server Component. Multiplayer remains server-authoritative through GraphQL, while the live game crosses a deliberate client boundary for Redux and RxJS.</p><div className="hero-actions"><Link className="button-link primary-link" href="/play">Play multiplayer</Link><Link className="button-link" href="/rules">Read the rules</Link></div><section className="render-grid"><article><strong>Static</strong><span>Home and rules pages are prerendered Server Components.</span></article><article><strong>Dynamic SSR</strong><span>The play route reads the session cookie and fetches player/lobby state per request.</span></article><article><strong>Client</strong><span>Redux, Apollo subscriptions and RxJS activate only inside the interactive game boundary.</span></article></section></main>
+}
