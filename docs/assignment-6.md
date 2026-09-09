@@ -2,24 +2,42 @@
 
 ## Goal
 
-Adapt the React application to Next.js with deliberate server/client component and rendering decisions.
+Adapt the verified Assignment 5 React application to Next.js with deliberate server/client component and rendering decisions while retaining all multiplayer behavior.
 
-## Technologies
+## Implementation
 
-Next.js, React, and client-side Redux/RxJS where required.
+Assignment 6 is implemented as the independent snapshot `assignments/assignment-6-next`.
 
-## Inputs from previous work
+- Next.js 16.3.4 App Router replaces the Vite-only React shell.
+- `/` and `/rules` are static Server Components.
+- `/play` is forced dynamic and server-rendered per request.
+- `/play` reads the session cookie and fetches the authenticated player plus lobby from GraphQL on the server, then hydrates Redux with that viewer-safe state.
+- `GameClient` is the explicit Client Component boundary containing Redux Toolkit, Apollo Client and RxJS.
+- Live `gameUpdated` GraphQL subscriptions still flow through RxJS into Redux.
+- Authentication, persistence, lobby, create/join/start, play/draw/UNO/catch, scoring, and viewer-safe opponent projections are retained from A5.
+- The functional A4 domain and authoritative GraphQL server are copied into A6; Next routes/components contain no UNO rules.
+- Development runs Next and GraphQL together; production build/start does the same with built artifacts.
 
-The Assignment 5 application architecture and its functional domain, state, and event boundaries.
+## Rendering proof
 
-## Requirements source
+The verified Next production build emits:
 
-The original Assignment 6 specification and supplied tests or supporting material. These have not yet been added or inspected.
+```text
+○ /       static
+ƒ /play   dynamic server-rendered
+○ /rules  static
+```
 
-## Implementation status
+This makes the static/dynamic decision observable rather than merely documented.
 
-Not started.
+## Verification
 
-## Notes
+- `npm run typecheck` — green
+- `npm test` — 11/11 A6 tests green
+- `npm run build` — Next production build and GraphQL server build green
+- `npm start` — production Next and GraphQL endpoints smoke-tested in CI
+- A1–A5 remain independent regression gates in the same workflow
 
-Use Server Components where appropriate and Client Components for interactive game behavior. Keep UNO rules out of framework routes and components.
+## Status
+
+Complete. This finishes the six-assignment WEB3 UNO sequence.

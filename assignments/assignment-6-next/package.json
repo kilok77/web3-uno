@@ -1,0 +1,43 @@
+{
+  "name": "web3-uno-assignment-6-next",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": "22.x" },
+  "scripts": {
+    "dev": "concurrently -k -n graphql,next \"npm:dev:server\" \"npm:dev:next\"",
+    "dev:server": "tsx watch src/server/index.ts",
+    "dev:next": "next dev -p 3000",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "npm run typecheck && next build && tsup src/server/index.ts --format esm --platform node --out-dir dist-server",
+    "start": "concurrently -k -n graphql,next \"node dist-server/index.js\" \"next start -p 3000\""
+  },
+  "dependencies": {
+    "@apollo/client": "^4.1.0",
+    "@apollo/server": "^5.0.0",
+    "@graphql-tools/schema": "^10.0.25",
+    "@reduxjs/toolkit": "^2.8.2",
+    "graphql": "^16.11.0",
+    "graphql-ws": "^6.0.6",
+    "lodash": "^4.17.21",
+    "next": "16.3.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-redux": "^9.2.0",
+    "rxjs": "^7.8.2",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.17.20",
+    "@types/node": "^22.18.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@types/ws": "^8.18.1",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.20.5",
+    "tsup": "^8.5.0",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.0"
+  }
+}

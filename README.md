@@ -2,7 +2,7 @@
 
 This repository holds six independently runnable, hand-in-ready snapshots of an evolving UNO project for the WEB3 semester.
 
-The project begins with an object-oriented TypeScript domain model. That model is used by a browser-only Vue application and then by a GraphQL multiplayer application. A separate functional rewrite branches from the original domain concepts; the multiplayer and functional strands meet in a React/Redux/RxJS application, which later evolves into a Next.js application.
+The project begins with an object-oriented TypeScript domain model. That model is used by a browser-only Vue application and then by a GraphQL multiplayer application. A separate functional rewrite branches from the original domain concepts; the multiplayer and functional strands meet in a React/Redux/RxJS application, which finally evolves into a Next.js SSR application.
 
 ```text
                  ┌── A2 Vue + bots ── A3 Vue + GraphQL multiplayer ──┐
@@ -29,6 +29,6 @@ A1 OO model ─────┤                                                  
 | 3 | GraphQL multiplayer | Complete — authoritative multiplayer, persistence, subscriptions, tests, and build green |
 | 4 | Functional UNO | Complete — typecheck and full supplied functional suite (185/185) green |
 | 5 | React + Redux + RxJS | Complete — typecheck, 9/9 A5 tests, client/server production builds green |
-| 6 | Next.js SSR | Not started |
+| 6 | Next.js SSR | Complete — typecheck, 11/11 A6 tests, static/dynamic Next build, GraphQL build, and production-start smoke check green |
 
-Current implementation target: Assignment 6, converting the verified React/Redux/RxJS application to Next.js SSR while preserving the authoritative GraphQL multiplayer boundary and functional UNO domain.
+All six assignment snapshots are implemented and independently runnable. The CI workflow keeps A1–A6 as separate regression gates.

@@ -1,0 +1,3 @@
+export default function RulesPage() {
+  return <main className="marketing prose"><p className="eyebrow">Static Server Component</p><h1>UNO rules used by this project</h1><p>Match the discard by color, number, or action type, or play a Wild. Draw Two and Wild Draw penalize the next player, Skip skips them, and Reverse changes direction. Wild Draw is legal only when the player has no card matching the current color.</p><p>When going from two cards to one, say UNO. A missed declaration can be caught before the next valid action and carries the assignment-specific four-card penalty.</p><p>The page explains rules, but does not implement them. All rule decisions remain in the copied functional domain model.</p></main>
+}
